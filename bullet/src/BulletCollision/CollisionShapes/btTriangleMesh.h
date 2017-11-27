@@ -53,6 +53,8 @@ class btTriangleMesh : public btTriangleIndexVertexArray
 		///In general it is better to directly use btTriangleIndexVertexArray instead.
 		void	addTriangle(const btVector3& vertex0,const btVector3& vertex1,const btVector3& vertex2, bool removeDuplicateVertices=false);
 		
+		void	addTriangleIndices(int index1, int index2, int index3 );
+
 		int getNumTriangles() const;
 
 		virtual void	preallocateVertices(int numverts);
