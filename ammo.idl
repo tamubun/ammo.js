@@ -306,6 +306,7 @@ interface btCompoundShape {
   void removeChildShapeByIndex(long childShapeindex);
   void removeChildShape(btCollisionShape shape);
   void updateChildTransform(long childShapeindex, [Const, Ref] btTransform newChildTransform, boolean shouldRecalculateLocalAabb);
+  [Const, Ref] btTransform getChildTransform(long childIndex);
   [Const] long getNumChildShapes();
   btCollisionShape getChildShape(long index);
   void setMargin(float margin);
