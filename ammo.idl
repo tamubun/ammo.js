@@ -4,7 +4,13 @@
 interface btVector3 {
   void btVector3();
   void btVector3(float x, float y, float z);
+  void setZero();
+  boolean isZero();
+  boolean fuzzyZero();
+  float distance([Const, Ref] btVector3 v);
+  float distance2([Const, Ref] btVector3 v);
   float length();
+  float length2();
   float x();
   float y();
   float z();
