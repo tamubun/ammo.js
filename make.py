@@ -92,7 +92,7 @@ def stage(text):
 
 try:
   this_dir = os.getcwd()
-  os.chdir('bullet')
+  os.chdir('bullet3')
   if not os.path.exists('build'):
     os.makedirs('build')
   os.chdir('build')
@@ -121,7 +121,18 @@ try:
   else:
     if not os.path.exists('config.h'):
       stage('Configure (if this fails, run autogen.sh in bullet/ first)')
-      emscripten.Building.configure(['../configure', '--disable-demos','--disable-dependency-tracking'])
+      os.chdir('../build3/')
+      # Popen(['./premake4_linux64',
+      # '--no-clsocket', 
+      # '--no-extras', 
+      # '--no-enet', 
+      # '--noopengl3', 
+      # '--no-test', 
+      # '--no-gtest',
+      # 'gmake'
+      # ]).communicate()
+      os.chdir('./gmake')
+      # emscripten.Building.configure(['../configure', '--disable-demos','--disable-dependency-tracking'])
 
   stage('Make')
 
@@ -132,18 +143,34 @@ try:
   else:
     emscripten.Building.make(['make', '-j', str(CORES)])
 
+  os.chdir('../../build')
+
   stage('Link')
 
-  if cmake_build:
-    bullet_libs = [os.path.join('src', 'BulletSoftBody', 'libBulletSoftBody.a'),
-                   os.path.join('src', 'BulletDynamics', 'libBulletDynamics.a'),
-                   os.path.join('src', 'BulletCollision', 'libBulletCollision.a'),
-                   os.path.join('src', 'LinearMath', 'libLinearMath.a')]
-  else:
-    bullet_libs = [os.path.join('src', '.libs', 'libBulletSoftBody.a'),
-                   os.path.join('src', '.libs', 'libBulletDynamics.a'),
-                   os.path.join('src', '.libs', 'libBulletCollision.a'),
-                   os.path.join('src', '.libs', 'libLinearMath.a')]
+  dirs = [
+    os.path.join('../build3/gmake/obj/x64/Release', 'BulletSoftBody'),
+    os.path.join('../build3/gmake/obj/x64/Release', 'BulletDynamics'),
+    os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision'),
+    os.path.join('../build3/gmake/obj/x64/Release', 'LinearMath'),
+  ]
+
+  bullet_libs = []
+
+  for directory in dirs:
+        for filename in os.listdir(directory):
+              if filename.endswith(".d"):
+                    bullet_libs.append(os.path.join(directory, filename))
+
+  # for filename in os.listdir(directory):
+  #       if filename.endswith(".asm") or filename.endswith(".py"): 
+
+  # bullet_libs = [ os.path.join('../build3/gmake/obj/x64/Release', 'BulletSoftBody', 'btSoftBody.d'),
+  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletDynamics', 'btRigidBody.d'),
+  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision', 'btCapsuleShape.d'),
+  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision', 'btSphereShape.d'),
+  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision', 'btAxisSweep3.d'),
+  #                 os.path.join('../build3/gmake/obj/x64/Release', 'LinearMath', 'btVector3.d'
+  #               )]
 
   emscripten.Building.link(['glue.bc'] + bullet_libs, 'libbullet.bc')
   assert os.path.exists('libbullet.bc')

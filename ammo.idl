@@ -445,10 +445,10 @@ interface btRigidBody {
   void setMassProps(float mass, [Const, Ref] btVector3 inertia);
   void setLinearFactor([Const, Ref] btVector3 linearFactor);
   void applyTorque([Const, Ref] btVector3 torque);
-  void applyLocalTorque([Const, Ref] btVector3 torque);
+  // void applyLocalTorque([Const, Ref] btVector3 torque);
   void applyForce([Const, Ref] btVector3 force, [Const, Ref] btVector3 rel_pos);
   void applyCentralForce([Const, Ref] btVector3 force);
-  void applyCentralLocalForce([Const, Ref] btVector3 force);
+  // void applyCentralLocalForce([Const, Ref] btVector3 force);
   void applyTorqueImpulse([Const, Ref] btVector3 torque);
   void applyImpulse([Const, Ref] btVector3 impulse, [Const, Ref] btVector3 rel_pos);
   void applyCentralImpulse([Const, Ref] btVector3 impulse);
@@ -720,30 +720,30 @@ interface btActionInterface {
     void updateAction (btCollisionWorld collisionWorld, float deltaTimeStep);
 };
 
-interface btKinematicCharacterController {
-  void btKinematicCharacterController(btPairCachingGhostObject ghostObject, btConvexShape convexShape, float stepHeight, optional long upAxis);
+// interface btKinematicCharacterController {
+//   void btKinematicCharacterController(btPairCachingGhostObject ghostObject, btConvexShape convexShape, float stepHeight, optional long upAxis);
 
-  void setUpAxis (long axis);
-  void setWalkDirection ([Const,Ref] btVector3 walkDirection);
-  void setVelocityForTimeInterval ([Const,Ref] btVector3 velocity, float timeInterval);
-  //void reset ();
-  void warp ([Const, Ref]btVector3 origin);
-  void preStep (btCollisionWorld collisionWorld);
-  void playerStep (btCollisionWorld collisionWorld, float dt);
-  void setFallSpeed (float fallSpeed);
-  void setJumpSpeed (float jumpSpeed);
-  void setMaxJumpHeight (float maxJumpHeight);
-  boolean canJump ();
-  void jump ();
-  void setGravity (float gravity);
-  float getGravity ();
-  void setMaxSlope (float slopeRadians);
-  float getMaxSlope ();
-  btPairCachingGhostObject getGhostObject ();
-  void setUseGhostSweepTest (boolean useGhostObjectSweepTest);
-  boolean onGround ();
-};
-btKinematicCharacterController implements btActionInterface;
+//   void setUpAxis (long axis);
+//   void setWalkDirection ([Const,Ref] btVector3 walkDirection);
+//   void setVelocityForTimeInterval ([Const,Ref] btVector3 velocity, float timeInterval);
+//   //void reset ();
+//   void warp ([Const, Ref]btVector3 origin);
+//   void preStep (btCollisionWorld collisionWorld);
+//   void playerStep (btCollisionWorld collisionWorld, float dt);
+//   void setFallSpeed (float fallSpeed);
+//   void setJumpSpeed (float jumpSpeed);
+//   void setMaxJumpHeight (float maxJumpHeight);
+//   boolean canJump ();
+//   void jump ();
+//   void setGravity (float gravity);
+//   float getGravity ();
+//   void setMaxSlope (float slopeRadians);
+//   float getMaxSlope ();
+//   btPairCachingGhostObject getGhostObject ();
+//   void setUseGhostSweepTest (boolean useGhostObjectSweepTest);
+//   boolean onGround ();
+// };
+// btKinematicCharacterController implements btActionInterface;
 
 interface btRaycastVehicle {
   void btRaycastVehicle([Const, Ref] btVehicleTuning tuning, btRigidBody chassis, btVehicleRaycaster raycaster);
