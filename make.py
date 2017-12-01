@@ -112,27 +112,24 @@ try:
   assert(os.path.exists('glue.bc'))
 
   # Configure with CMake on Windows, and with configure on Unix.
-  cmake_build = emscripten.WINDOWS
-
-  if cmake_build:
-    if not os.path.exists('CMakeCache.txt'):
+  if not os.path.exists('CMakeCache.txt'):
       stage('Configure via CMake')
-      emscripten.Building.configure([emscripten.PYTHON, os.path.join(EMSCRIPTEN_ROOT, 'emcmake'), 'cmake', '..', '-DBUILD_DEMOS=OFF', '-DBUILD_EXTRAS=OFF', '-DBUILD_CPU_DEMOS=OFF', '-DUSE_GLUT=OFF', '-DCMAKE_BUILD_TYPE=Release'])
-  else:
-    if not os.path.exists('config.h'):
-      stage('Configure (if this fails, run autogen.sh in bullet/ first)')
-      os.chdir('../build3/')
-      # Popen(['./premake4_linux64',
-      # '--no-clsocket', 
-      # '--no-extras', 
-      # '--no-enet', 
-      # '--noopengl3', 
-      # '--no-test', 
-      # '--no-gtest',
-      # 'gmake'
-      # ]).communicate()
-      os.chdir('./gmake')
-      # emscripten.Building.configure(['../configure', '--disable-demos','--disable-dependency-tracking'])
+      emscripten.Building.configure([emscripten.PYTHON, os.path.join(EMSCRIPTEN_ROOT, 'emcmake'), 'cmake', '..', 
+        '-DBUILD_EXTRAS=OFF', 
+        '-DBUILD_CPU_DEMOS=OFF', 
+        '-DBUILD_BULLET3=OFF', 
+        '-DBUILD_BULLET2_DEMOS=OFF', 
+        '-DBUILD_OPENGL3_DEMOS=OFF', 
+        '-DBUILD_ENET=OFF', 
+        '-DBUILD_CLSOCKET=OFF', 
+        '-DBUILD_UNIT_TESTS=OFF', 
+        '-DUSE_GLUT=OFF', 
+
+        '-DUSE_GRAPHICAL_BENCHMARK=OFF', 
+        '-USE_MSVC_SSE2=ON', 
+
+        '-DCMAKE_BUILD_TYPE=Release'
+      ])
 
   stage('Make')
 
@@ -143,34 +140,13 @@ try:
   else:
     emscripten.Building.make(['make', '-j', str(CORES)])
 
-  os.chdir('../../build')
 
   stage('Link')
 
-  dirs = [
-    os.path.join('../build3/gmake/obj/x64/Release', 'BulletSoftBody'),
-    os.path.join('../build3/gmake/obj/x64/Release', 'BulletDynamics'),
-    os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision'),
-    os.path.join('../build3/gmake/obj/x64/Release', 'LinearMath'),
-  ]
-
-  bullet_libs = []
-
-  for directory in dirs:
-        for filename in os.listdir(directory):
-              if filename.endswith(".d"):
-                    bullet_libs.append(os.path.join(directory, filename))
-
-  # for filename in os.listdir(directory):
-  #       if filename.endswith(".asm") or filename.endswith(".py"): 
-
-  # bullet_libs = [ os.path.join('../build3/gmake/obj/x64/Release', 'BulletSoftBody', 'btSoftBody.d'),
-  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletDynamics', 'btRigidBody.d'),
-  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision', 'btCapsuleShape.d'),
-  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision', 'btSphereShape.d'),
-  #                 os.path.join('../build3/gmake/obj/x64/Release', 'BulletCollision', 'btAxisSweep3.d'),
-  #                 os.path.join('../build3/gmake/obj/x64/Release', 'LinearMath', 'btVector3.d'
-  #               )]
+  bullet_libs = [os.path.join('src', 'BulletSoftBody', 'libBulletSoftBody.a'),
+                   os.path.join('src', 'BulletDynamics', 'libBulletDynamics.a'),
+                   os.path.join('src', 'BulletCollision', 'libBulletCollision.a'),
+                   os.path.join('src', 'LinearMath', 'libLinearMath.a')]
 
   emscripten.Building.link(['glue.bc'] + bullet_libs, 'libbullet.bc')
   assert os.path.exists('libbullet.bc')
