@@ -294,6 +294,7 @@ interface btConvexHullShape {
   void addPoint([Const, Ref] btVector3 point, optional boolean recalculateLocalAABB);
   void setMargin(float margin);
   float getMargin();
+  void recalcLocalAabb();
 };
 btConvexHullShape implements btCollisionShape;
 
