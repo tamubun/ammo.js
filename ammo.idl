@@ -19,6 +19,7 @@ interface btVector3 {
   void setZ(float z);
   void setValue(float x, float y, float z);
   void normalize();
+  [Value] btVector3 cross([Ref] btVector3 v);
   [Value] btVector3 rotate([Ref] btVector3 wAxis, float angle);
   float dot([Ref] btVector3 v);
   [Operator="*=", Ref] btVector3 op_mul(float x);
@@ -116,6 +117,9 @@ interface btCollisionObject {
   void setFriction(float frict);
   void setRollingFriction(float frict);
   [Ref] btTransform getWorldTransform();
+  [Ref] btTransform getInterpolationWorldTransform();
+  [Ref, Const] btVector3 getInterpolationLinearVelocity();
+  [Ref, Const] btVector3 getInterpolationAngularVelocity();
   long getCollisionFlags();
   void setCollisionFlags(long flags);
   void setWorldTransform([Const,Ref] btTransform worldTrans);
@@ -290,11 +294,12 @@ interface btConeShape {
 btConeShape implements btCollisionShape;
 
 interface btConvexHullShape {
-  void btConvexHullShape();
+  void btConvexHullShape([Const] optional float[] points, optional long numPoints);
   void addPoint([Const, Ref] btVector3 point, optional boolean recalculateLocalAABB);
   void setMargin(float margin);
   float getMargin();
   void recalcLocalAabb();
+  long getNumVertices();
 };
 btConvexHullShape implements btCollisionShape;
 
@@ -455,6 +460,8 @@ interface btRigidBody {
   void applyImpulse([Const, Ref] btVector3 impulse, [Const, Ref] btVector3 rel_pos);
   void applyCentralImpulse([Const, Ref] btVector3 impulse);
   void updateInertiaTensor();
+  [Value] btVector3 getVelocityInLocalPoint([Const, Ref] btVector3 rel_pos);
+  [Const, Ref] btVector3 getCenterOfMassPosition();
   [Const, Ref] btVector3 getLinearVelocity();
   [Const, Ref] btVector3 getAngularVelocity();
   void setLinearVelocity([Const, Ref] btVector3 lin_vel);
@@ -462,7 +469,7 @@ interface btRigidBody {
   btMotionState getMotionState();
   void setMotionState(btMotionState motionState);
   void setAngularFactor([Const, Ref] btVector3 angularFactor);
-  btRigidBody upcast([Const] btCollisionObject colObj);
+  btRigidBody upcast(btCollisionObject colObj);
   void getAabb([Ref] btVector3 aabbMin, [Ref] btVector3 aabbMax);
 };
 btRigidBody implements btCollisionObject;
@@ -597,8 +604,8 @@ interface btCollisionWorld {
   void removeCollisionObject (btCollisionObject collisionObject);
   [Const] btBroadphaseInterface getBroadphase ();
   void convexSweepTest([Const] btConvexShape castShape, [Const, Ref] btTransform from, [Const, Ref] btTransform to, [Ref] ConvexResultCallback resultCallback, float allowedCcdPenetration);
-  void contactPairTest([Const] btCollisionObject colObjA, [Const] btCollisionObject colObjB, [Ref] ContactResultCallback resultCallback);
-  void contactTest([Const] btCollisionObject colObj, [Ref] ContactResultCallback resultCallback);
+  void contactPairTest(btCollisionObject colObjA, btCollisionObject colObjB, [Ref] ContactResultCallback resultCallback);
+  void contactTest(btCollisionObject colObj, [Ref] ContactResultCallback resultCallback);
 };
 
 interface btContactSolverInfo {
@@ -631,6 +638,8 @@ interface btDiscreteDynamicsWorld {
   void removeConstraint(btTypedConstraint constraint);
 
   long stepSimulation(float timeStep, optional long maxSubSteps, optional float fixedTimeStep);
+
+  void setSynchronizeAllMotionStates(boolean synchronizeAll);
 };
 btDiscreteDynamicsWorld implements btDynamicsWorld;
 
@@ -653,7 +662,7 @@ interface btVehicleRaycasterResult {
 };
 
 interface btVehicleRaycaster {
-    void castRay ([Const, Ref] btVector3 from, [Const, Ref] btVector3 to, [Const, Ref] btVehicleRaycasterResult result);
+    void castRay ([Const, Ref] btVector3 from, [Const, Ref] btVector3 to, [Ref] btVehicleRaycasterResult result);
 };
 
 interface btDefaultVehicleRaycaster {
@@ -722,30 +731,36 @@ interface btActionInterface {
     void updateAction (btCollisionWorld collisionWorld, float deltaTimeStep);
 };
 
-// interface btKinematicCharacterController {
-//   void btKinematicCharacterController(btPairCachingGhostObject ghostObject, btConvexShape convexShape, float stepHeight, optional long upAxis);
+interface btKinematicCharacterController {
+  void btKinematicCharacterController(btPairCachingGhostObject ghostObject, btConvexShape convexShape, float stepHeight, [Const,Ref] optional btVector3 upAxis);
 
-//   void setUpAxis (long axis);
-//   void setWalkDirection ([Const,Ref] btVector3 walkDirection);
-//   void setVelocityForTimeInterval ([Const,Ref] btVector3 velocity, float timeInterval);
-//   //void reset ();
-//   void warp ([Const, Ref]btVector3 origin);
-//   void preStep (btCollisionWorld collisionWorld);
-//   void playerStep (btCollisionWorld collisionWorld, float dt);
-//   void setFallSpeed (float fallSpeed);
-//   void setJumpSpeed (float jumpSpeed);
-//   void setMaxJumpHeight (float maxJumpHeight);
-//   boolean canJump ();
-//   void jump ();
-//   void setGravity (float gravity);
-//   float getGravity ();
-//   void setMaxSlope (float slopeRadians);
-//   float getMaxSlope ();
-//   btPairCachingGhostObject getGhostObject ();
-//   void setUseGhostSweepTest (boolean useGhostObjectSweepTest);
-//   boolean onGround ();
-// };
-// btKinematicCharacterController implements btActionInterface;
+  void setUp ([Const,Ref] btVector3 up);
+  void applyImpulse([Const,Ref] btVector3 v);
+  void setWalkDirection ([Const,Ref] btVector3 walkDirection);
+  void setVelocityForTimeInterval ([Const,Ref] btVector3 velocity, float timeInterval);
+  //void reset ();
+  void warp ([Const, Ref] btVector3 origin);
+  void preStep (btCollisionWorld collisionWorld);
+  void playerStep (btCollisionWorld collisionWorld, float dt);
+  void setFallSpeed (float fallSpeed);
+  void setJumpSpeed (float jumpSpeed);
+  void setMaxJumpHeight (float maxJumpHeight);
+  boolean canJump ();
+  void jump ();
+  void setGravity ([Const,Ref] btVector3 gravity);
+  [Value] btVector3 getGravity ();
+  void setMaxSlope (float slopeRadians);
+  float getMaxSlope ();
+  btPairCachingGhostObject getGhostObject ();
+  void setUseGhostSweepTest (boolean useGhostObjectSweepTest);
+  boolean onGround ();
+  [Value] btVector3 getLinearVelocity();
+  void setLinearDamping(float d);
+  float getLinearDamping();
+  void setAngularDamping(float d);
+  float getAngularDamping();
+};
+btKinematicCharacterController implements btActionInterface;
 
 interface btRaycastVehicle {
   void btRaycastVehicle([Const, Ref] btVehicleTuning tuning, btRigidBody chassis, btVehicleRaycaster raycaster);
