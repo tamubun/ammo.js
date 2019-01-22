@@ -759,6 +759,9 @@ interface btKinematicCharacterController {
   float getLinearDamping();
   void setAngularDamping(float d);
   float getAngularDamping();
+  float getVerticalVelocity();
+  [Value] btVector3 getStepUpDelta();
+  [Value] btVector3 getStepDownDelta();
 };
 btKinematicCharacterController implements btActionInterface;
 
