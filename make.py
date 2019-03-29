@@ -23,8 +23,7 @@ INCLUDES = ['btBulletDynamicsCommon.h',
             os.path.join('BulletDynamics', 'Character',
                          'btKinematicCharacterController.h'),
 
-            os.path.join('BulletDynamics', 'Character',
-                         'hbrKinematicCharacterController.cpp'),
+            os.path.join('..', '..', 'extension', 'hbrKinematicCharacterController.cpp'),
 
             os.path.join('BulletSoftBody', 'btSoftBody.h'),
             os.path.join('BulletSoftBody', 'btSoftRigidDynamicsWorld.h'), os.path.join(
