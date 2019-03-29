@@ -14,17 +14,26 @@ ammo.js
 
 # Overview
 
-**Example code to give you an idea of the API: https://github.com/kripken/ammo.js/blob/master/examples/webgl_demo/ammo.html#L14**
+**Example code to give you an idea of the API**:
 
-ammo.js is a direct port of the [Bullet physics engine](http://bulletphysics.org/) to JavaScript, using Emscripten. The source code is translated directly to JavaScript, without human rewriting, so functionality should be identical to the original Bullet.
+ * https://github.com/kripken/ammo.js/blob/master/examples/webgl_demo/worker.js#L6 which interacts with https://github.com/kripken/ammo.js/blob/master/examples/webgl_demo/ammo.html#L14
 
-**Note: ammo.js has just been updated to a new porting approach. If you find some part of the Bullet API that is not supported that you need, please see https://github.com/kripken/ammo.js/issues/60**
+ammo.js is a direct port of the [Bullet physics
+engine](http://bulletphysics.org/) to JavaScript, using Emscripten. The source
+code is translated directly to JavaScript, without human rewriting, so
+functionality should be identical to the original Bullet.
 
-'ammo' stands for "Avoided Making My Own js physics engine by compiling bullet from C++" ;)
+**Note: ammo.js has just been updated to a new porting approach. If you find
+some part of the Bullet API that is not supported that you need, please see
+https://github.com/kripken/ammo.js/issues/60**
+
+'ammo' stands for "Avoided Making My Own js physics engine by compiling bullet
+from C++" ;)
 
 ammo.js is zlib licensed, just like Bullet.
 
-Discussion takes place on IRC at #emscripten on Mozilla's server (irc.mozilla.org)
+Discussion takes place on IRC at #emscripten on Mozilla's server
+(irc.mozilla.org)
 
 
 Instructions
@@ -110,16 +119,26 @@ to be aware of:
 
   * There is experimental support for binding operator functions. The following
     might work:
-         
-    | Operator  | Name in JS  |
-    |---|---|
-    | `=`  | `op_set`  |
-    | `+`  | `op_add`  |
-    | `-`  | `op_sub`  |
-    | `*`  | `op_mul`  |
-    | `/`  | `op_div`  |
-    | `[]`  | `op_get`  |
-    | `==`  | `op_eq`  |
+
+    | Operator  | Name in JS |
+    |-----------|------------|
+    | `=`       | `op_set`   |
+    | `+`       | `op_add`   |
+    | `-`       | `op_sub`   |
+    | `*`       | `op_mul`   |
+    | `/`       | `op_div`   |
+    | `[]`      | `op_get`   |
+    | `==`      | `op_eq`    |
+
+
+Reducing Build Size
+===============
+
+The size of the ammo.js builds can be reduced in several ways:
+
+  * Removing uneeded interfaces from ammo.idl. Some good examples of this are `btIDebugDraw` and `DebugDrawer`, which are both only needed if visual debug rendering is desired.
+
+  * Removing methods from the `-s EXPORTED_RUNTIME_METHODS=[]` argument in make.py. For example, `Pointer_stringify` is only needed if printable error messages are desired from `DebugDrawer`.
 
 
 Troubleshooting
@@ -152,17 +171,14 @@ Release Process
 Pushing a new build in `builds/ammo.js` should be done only after the
 following steps:
 
-  * Build using  python make.py  which generates builds/temp.js
+  * Build using  python make.py closure       which generates the asm.js
+    build, and   python make.py closure wasm  which generates the wasm
+    build.
 
-  * Make sure it passes all automatic tests using  python test.py
-    (That uses builds/temp.js by default, you can also pass a flag
-    saying which build to use.) Note that it uses SpiderMonkey
+  * Make sure it passes all automatic tests using
+    python test.py (build-name)  Note that it uses SpiderMonkey
     by default, and SPIDERMONKEY_ENGINE is defined in ~/.emscripten,
     see the script contents for details.
-
-  * Make sure that the stress test benchmark did not regress
-    compared to the old build. That number is printed out at the
-    end of running the tests.
 
   * Run the WebGL demo in examples/webgl_demo and make sure it looks
     ok, using something like  firefox examples/webgl_demo/ammo.html
@@ -173,4 +189,3 @@ Upstream Version
 ================
 
 Bullet 2.82 patched with [raycast fix from 2.83](https://github.com/bulletphysics/bullet3/commit/7151865c16ba996996206e1fd7869cbb1e7edd8d)
-
