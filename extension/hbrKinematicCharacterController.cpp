@@ -797,7 +797,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	m_localVelocity += m_acceleration;
 	m_moveOffset = m_localVelocity * dt + m_externalVelocity * dt;
 
-	m_verticalVelocity = m_localVelocity.y();
+	m_verticalVelocity = m_localVelocity.y() - m_externalVelocity.y();
 	m_verticalOffset = m_moveOffset.y();
 
 	btTransform xform;
@@ -934,7 +934,7 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 					{
 						// printf("On Ground\n");
 						m_onGround = true;
-						m_localVelocity.setY(m_externalVelocity.getY());
+						m_localVelocity.setY(0.0);
 					}
 					else
 					{
@@ -946,7 +946,7 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 
 						// printf("normal(%f,%f,%f)\n", point.m_normalWorldOnB[0],point.m_normalWorldOnB[1],point.m_normalWorldOnB[2]);
 
-						m_localVelocity -= velInNormalDir * 0.8f;
+						m_localVelocity -= velInNormalDir * 1.05f;
 					}
 				}
 			}
