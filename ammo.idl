@@ -853,6 +853,8 @@ interface hbrKinematicCharacterController {
   void setFallSpeed (float fallSpeed);
   void setJumpSpeed (float jumpSpeed);
   void setMaxJumpHeight (float maxJumpHeight);
+  void setGroundSpeed (float groundSpeed);
+  void setAirSpeed (float airSpeed);
   boolean canJump ();
   void jump ();
   void setGravity ([Const,Ref] btVector3 gravity);

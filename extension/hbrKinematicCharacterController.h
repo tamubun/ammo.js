@@ -18,7 +18,7 @@ subject to the following restrictions:
 
 #include "LinearMath/btVector3.h"
 
-#include "btCharacterControllerInterface.h"
+#include "BulletDynamics/Character/btCharacterControllerInterface.h"
 
 #include "BulletCollision/BroadphaseCollision/btCollisionAlgorithm.h"
 
@@ -62,6 +62,7 @@ protected:
 	btVector3 m_walkDirection;
 	btVector3 m_normalizedDirection;
 	btVector3 m_AngVel;
+
 	btVector3 m_localVelocity;
 	btVector3 m_externalVelocity;
 	btVector3 m_velocity;
@@ -70,6 +71,7 @@ protected:
 
 	btScalar m_groundSpeed;
 	btScalar m_airSpeed;
+	btScalar m_friction;
 
 	bool m_onGround;
 
@@ -172,6 +174,12 @@ public:
 
 	void preStep(btCollisionWorld * collisionWorld);
 	void playerStep(btCollisionWorld * collisionWorld, btScalar dt);
+
+	void setGroundSpeed(btScalar groundSpeed);
+	void setAirSpeed(btScalar airSpeed);
+
+	void inheritVelocity(btCollisionWorld* collisionWorld);
+	void testCollisions(btCollisionWorld* collisionWorld);
 
 	void setStepHeight(btScalar h);
 	btScalar getStepHeight() const { return m_stepHeight; }
