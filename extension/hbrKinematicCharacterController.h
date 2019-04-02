@@ -136,6 +136,8 @@ public:
 		playerStep(collisionWorld, deltaTime);
 	}
 
+	void preUpdate(btCollisionWorld * collisionWorld, btScalar deltaTime);
+
 	///btActionInterface interface
 	void debugDraw(btIDebugDraw * debugDrawer);
 

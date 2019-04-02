@@ -850,6 +850,7 @@ interface hbrKinematicCharacterController {
   void warp ([Const, Ref] btVector3 origin);
   void preStep (btCollisionWorld collisionWorld);
   void playerStep (btCollisionWorld collisionWorld, float dt);
+  void preUpdate (btCollisionWorld collisionWorld, float dt);
   void setFallSpeed (float fallSpeed);
   void setJumpSpeed (float jumpSpeed);
   void setMaxJumpHeight (float maxJumpHeight);
