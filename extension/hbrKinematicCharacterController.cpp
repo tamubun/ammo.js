@@ -762,22 +762,41 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	inheritVelocity(collisionWorld);
 
+	if(m_wasOnGround && !m_onGround){
+		m_localVelocity += m_externalVelocity;
+		m_externalVelocity.setZero();
+	}
+
 	btScalar speed = m_wasOnGround ? m_groundSpeed : m_airSpeed;
 
 	m_acceleration.setZero();
-	m_acceleration += m_walkDirection * speed * dt;
-	m_acceleration.setY(m_acceleration.y() - m_gravity * dt);
+	m_acceleration += m_walkDirection * speed * dt -m_gravity * m_up * dt;
 
 	btVector3 groundFriction = -m_friction * m_localVelocity;
 	groundFriction.setY(0.0);
 
 	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
 
-	if(m_wasOnGround){
+	if(m_onGround){
 		m_localVelocity += groundFriction;
 	}
 
 	m_localVelocity += m_acceleration;
+
+	if (m_localVelocity.y() > 0.0 && m_localVelocity.y() > m_jumpSpeed)
+	{
+		m_localVelocity.setY(m_jumpSpeed);
+	}
+
+	if (m_localVelocity.y() < 0.0 && btFabs(m_localVelocity.y()) > btFabs(m_fallSpeed))
+	{
+		m_localVelocity.setY(-btFabs(m_fallSpeed));
+	}
+
+	testCollisions(collisionWorld);
+
+	
+
 	m_moveOffset = m_localVelocity * dt + m_externalVelocity * dt;
 
 	m_verticalVelocity = m_localVelocity.y() - m_externalVelocity.y();
@@ -812,17 +831,8 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	xform.setOrigin(m_currentPosition);
 	m_ghostObject->setWorldTransform(xform);
 
-	testCollisions(collisionWorld);
-
 	if(m_onGround && m_localVelocity.y() < 0.0){
 		m_localVelocity.setY(0.0);
-	}
-
-	// testCollisions(collisionWorld);
-
-	if(m_wasOnGround && !m_onGround){
-		m_localVelocity += m_externalVelocity;
-		m_externalVelocity.setZero();
 	}
 
 	int numPenetrationLoops = 0;
