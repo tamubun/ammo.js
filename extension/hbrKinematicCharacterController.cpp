@@ -496,8 +496,8 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 	if (m_verticalVelocity > 0.0)
 		return;
 
-	// if (downVelocity > 0.0 && downVelocity > m_fallSpeed && (m_wasOnGround || !m_wasJumping))
-	// 	downVelocity = m_fallSpeed;
+	if (downVelocity > 0.0 && downVelocity > m_fallSpeed && (m_wasOnGround || !m_wasJumping))
+		downVelocity = m_fallSpeed;
 
 	btVector3 step_drop = m_up * (m_currentStepOffset + downVelocity);
 	m_targetPosition -= step_drop;
@@ -719,11 +719,12 @@ void hbrKinematicCharacterController::preStep(btCollisionWorld *collisionWorld)
 
 	m_currentOrientation = m_ghostObject->getWorldTransform().getRotation();
 	m_targetOrientation = m_currentOrientation;
+
 	//	printf("m_targetPosition=%f,%f,%f\n",m_targetPosition[0],m_targetPosition[1],m_targetPosition[2]);
 }
 
 void hbrKinematicCharacterController::preUpdate(btCollisionWorld * collisionWorld, btScalar deltaTime) {
-
+	
 }
 
 void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorld, btScalar dt)
@@ -759,19 +760,23 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	m_onGround = false;
 
-	if(m_wasOnGround){
-		inheritVelocity(collisionWorld);
-	}
+	inheritVelocity(collisionWorld);
+
+	btScalar speed = m_wasOnGround ? m_groundSpeed : m_airSpeed;
 
 	m_acceleration.setZero();
-	m_acceleration += m_walkDirection * m_groundSpeed * dt;
+	m_acceleration += m_walkDirection * speed * dt;
 	m_acceleration.setY(m_acceleration.y() - m_gravity * dt);
 
 	btVector3 groundFriction = -m_friction * m_localVelocity;
 	groundFriction.setY(0.0);
 
 	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
-	m_localVelocity += groundFriction;
+
+	if(m_wasOnGround){
+		m_localVelocity += groundFriction;
+	}
+
 	m_localVelocity += m_acceleration;
 	m_moveOffset = m_localVelocity * dt + m_externalVelocity * dt;
 
@@ -792,7 +797,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	stepForwardAndStrafe(collisionWorld, m_moveOffset);
 
 	// btVector3 deltaPosition = m_currentPosition - currentPosition;
-	// m_localVelocity = deltaPosition / dt;
+	// m_localVelocity = deltaPosition / dt - m_externalVelocity;
 
 	// m_verticalVelocity = m_localVelocity.y();
 
@@ -817,6 +822,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	if(m_wasOnGround && !m_onGround){
 		m_localVelocity += m_externalVelocity;
+		m_externalVelocity.setZero();
 	}
 
 	int numPenetrationLoops = 0;
@@ -858,6 +864,8 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 		btVector3 localPosition = callback.m_hitPointWorld - transform.getOrigin();
 
 		m_externalVelocity = angularVelocity.cross(localPosition) + linearVel;
+
+		m_onGround = true;
 	}
 }
 
@@ -886,7 +894,7 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 		{
 			btPersistentManifold *pManifold = manifoldArray[j];
 
-			if(pManifold->getBody0() == m_ghostObject)
+			if(pManifold->getBody1() == m_ghostObject)
 				continue;
 
 			if(btGhostObject::upcast(pManifold->getBody1()) != NULL)
@@ -908,6 +916,7 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 
 					// If point is in rounded bottom region of capsule shape, it is on the ground
 
+					// printf("Velocity(%f)\n", point.m_normalWorldOnB.dot(m_up));
 
 					//point.m_normalWorldOnB.dot(m_up) > 0.0
 
@@ -919,13 +928,14 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 					{
 						//point.m_normalWorldOnB
 
-						// btVector3 velInNormalDir(m_localVelocity.(point.m_normalWorldOnB));
 
 						btVector3 velInNormalDir = point.m_normalWorldOnB * m_localVelocity.dot(point.m_normalWorldOnB);
 
 						// printf("normal(%f,%f,%f)\n", point.m_normalWorldOnB[0],point.m_normalWorldOnB[1],point.m_normalWorldOnB[2]);
 
 						m_localVelocity -= velInNormalDir * 1.05f;
+
+						//m_localVelocity -= point.m_normalWorldOnB * m_localVelocity;
 
 						// if(isDynamic){
 						// 	body->applyForce(point.m_normalWorldOnB * 5.0, point.m_localPointB);
@@ -981,7 +991,6 @@ void hbrKinematicCharacterController::jump(const btVector3 &v)
 	m_jumpPosition = m_ghostObject->getWorldTransform().getOrigin();
 
 	m_localVelocity += m_jumpAxis * m_verticalVelocity;
-
 #if 0
 	currently no jumping.
 	btTransform xform;
