@@ -72,6 +72,7 @@ protected:
 	btScalar m_groundSpeed;
 	btScalar m_airSpeed;
 	btScalar m_friction;
+	btScalar m_currentSpeed;
 
 	bool m_onGround;
 
