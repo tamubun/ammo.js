@@ -104,6 +104,45 @@ class btKinematicClosestNotMeConvexResultCallback : public btCollisionWorld::Clo
 	btScalar m_minSlopeDot;
 };
 
+class btKinematicClosestNotMeConvexResultCallback2 : public btCollisionWorld::ClosestConvexResultCallback
+{
+  public:
+	btKinematicClosestNotMeConvexResultCallback2(btCollisionObject *me, const btVector3 &up, btScalar minSlopeDot)
+		: btCollisionWorld::ClosestConvexResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0)), m_me(me), m_up(up), m_minSlopeDot(minSlopeDot)
+	{
+	}
+
+	virtual btScalar addSingleResult(btCollisionWorld::LocalConvexResult &convexResult, bool normalInWorldSpace)
+	{
+		if (convexResult.m_hitCollisionObject == m_me)
+			return btScalar(1.0);
+
+		btVector3 hitNormalWorld;
+		if (normalInWorldSpace)
+		{
+			hitNormalWorld = convexResult.m_hitNormalLocal;
+		}
+		else
+		{
+			///need to transform normal into worldspace
+			hitNormalWorld = convexResult.m_hitCollisionObject->getWorldTransform().getBasis() * convexResult.m_hitNormalLocal;
+		}
+
+		btScalar dotUp = m_up.dot(hitNormalWorld);
+		if (dotUp < m_minSlopeDot)
+		{
+			return btScalar(1.0);
+		}
+
+		return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
+	}
+
+  protected:
+	btCollisionObject *m_me;
+	const btVector3 m_up;
+	btScalar m_minSlopeDot;
+};
+
 /*
  * Returns the reflection direction of a ray going 'direction' hitting a surface with normal 'normal'
  *
@@ -282,7 +321,7 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 	/* FIXME: Handle penetration properly */
 	start.setOrigin(m_currentPosition);
 
-	m_targetPosition = m_currentPosition + m_up * (stepHeight);// + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
+	m_targetPosition = m_currentPosition + m_up * (stepHeight) + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
 	m_currentPosition = m_targetPosition;
 
 	end.setOrigin(m_targetPosition);
@@ -824,15 +863,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	btTransform xform;
 	xform = m_ghostObject->getWorldTransform();
 
-	// if (m_localVelocity.length2() > SIMD_EPSILON)
-	// {
-	// 	m_jumpAxis = m_localVelocity;
-	// 	m_jumpAxis.normalize();
-	// }
-	// else
-	// {
-	// 	m_jumpAxis.setZero();
-	// }
+	m_jumpAxis.setValue(0.0, m_localVelocity.y() > SIMD_EPSILON && !m_isAirWalking, 0.0);
 
 	m_currentSpeed = m_localVelocity.length();
 	
@@ -871,8 +902,6 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	xform.setOrigin(m_currentPosition);
 	m_ghostObject->setWorldTransform(xform);
 
-	testCollisions(collisionWorld);
-
 	int numPenetrationLoops = 0;
 	m_touchingContact = false;
 	while (recoverFromPenetration(collisionWorld))
@@ -885,6 +914,8 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 			break;
 		}
 	}
+
+	testCollisions(collisionWorld);
 }
 
 void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisionWorld, btScalar dt)
@@ -895,15 +926,30 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 	callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
 	callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
 
-	start.setOrigin(m_currentPosition);
-	end.setOrigin(m_currentPosition - m_up * m_stepHeight);
+	btVector3 startVec = m_currentPosition + m_externalVelocity * dt * 0.5;
+
+	if(m_wasJumping && m_localVelocity.y() > SIMD_EPSILON){
+		return;
+	}
+
+	//btMax(m_stepHeight, m_externalVelocity.y() * dt)
+
+	start.setOrigin(startVec);
+	end.setOrigin(startVec - m_up * btMax(m_stepHeight, m_externalVelocity.y() * dt));
 
 	start.setRotation(m_currentOrientation);
 	end.setRotation(m_currentOrientation);
 
-	m_ghostObject->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
+	btVector3 asd = m_externalVelocity * dt * 0.5;
 
-	if (callback.hasHit() && m_ghostObject->hasContactResponse() && callback.m_hitNormalWorld.dot(m_up) > 0.0)
+	collisionWorld->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
+
+	// printf("m_closestHitFraction(%f)\n", callback.m_closestHitFraction);
+	// if(!callback.hasHit()){
+	// 	printf("HasNotHit(%f, %f, %f)\n", asd[0], asd[1], asd[2]);
+	// }
+
+	if (callback.hasHit() && callback.m_hitNormalWorld.dot(m_up) > 0.0)
 	{
 		// if(callback.m_closestHitFraction > SIMD_EPSILON){
 		// 	return;
@@ -987,7 +1033,7 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 
 					if (m_currentPosition.getY() - ptB.getY() > 0.9 - m_stepHeight)
 					{
-						m_onGround = true;
+						// m_onGround = true;
 					}
 					else
 					{
