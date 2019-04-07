@@ -73,6 +73,8 @@ protected:
 	btScalar m_airSpeed;
 	btScalar m_friction;
 	btScalar m_currentSpeed;
+	btScalar m_speedModifier;
+	bool m_isAirWalking;
 
 	bool m_onGround;
 
@@ -181,8 +183,10 @@ public:
 	void setGroundSpeed(btScalar groundSpeed);
 	void setAirSpeed(btScalar airSpeed);
 
-	void inheritVelocity(btCollisionWorld* collisionWorld);
+	void inheritVelocity(btCollisionWorld* collisionWorld, btScalar dt);
 	void testCollisions(btCollisionWorld* collisionWorld);
+	void setAirWalking(bool enabled) { m_isAirWalking = enabled; };
+	void setSpeedModifier(btScalar speed) { m_speedModifier = speed; };
 
 	void setStepHeight(btScalar h);
 	btScalar getStepHeight() const { return m_stepHeight; }
