@@ -820,7 +820,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	inheritVelocity(collisionWorld, dt);
 
-	if (m_wasOnGround && !m_onGround)
+	if (!m_onGround)
 	{
 		m_localVelocity += m_externalVelocity;
 		m_externalVelocity.setZero();
@@ -937,8 +937,10 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 
 	//btMax(m_stepHeight, m_externalVelocity.y() * dt)
 
+	btScalar offset = btMin(btMax(m_stepHeight, m_externalVelocity.y() * dt), m_gravity * dt);
+
 	start.setOrigin(startVec);
-	end.setOrigin(startVec - m_up * btMax(m_stepHeight, m_externalVelocity.y() * dt));
+	end.setOrigin(startVec - m_up * offset);
 
 	start.setRotation(m_currentOrientation);
 	end.setRotation(m_currentOrientation);
@@ -963,8 +965,13 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 
 		btVector3 localPosition = callback.m_hitPointWorld - transform.getOrigin();
 
-		m_externalVelocity = angularVelocity.cross(localPosition) + linearVel;
+		btVector3 newVelocity = angularVelocity.cross(localPosition) + linearVel;
 
+		// if(newVelocity.y() - m_externalVelocity.y() < -m_fallSpeed){
+		// 	return;
+		// }
+
+		m_externalVelocity = newVelocity;
 		m_onGround = true;
 	}
 }
