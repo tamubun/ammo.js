@@ -208,6 +208,7 @@ hbrKinematicCharacterController::hbrKinematicCharacterController(btPairCachingGh
 	m_groundSpeed = btScalar(8.0);
 	m_airSpeed = btScalar(4.0);
 	m_friction = 0.1;
+	m_drag = 0.01;
 	m_currentSpeed = 0.0;
 	m_isAirWalking = false;
 	m_speedModifier = 1.0;
@@ -829,14 +830,16 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	
 	m_acceleration += m_walkDirection * speed * dt - m_gravity * m_up * dt;
 
-	btVector3 groundFriction = -m_friction * m_localVelocity;
-	groundFriction.setY(0.0);
-
 	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
 
 	if (m_onGround)
 	{
+		btVector3 groundFriction = -m_friction * m_localVelocity;
+		groundFriction.setY(0.0);
 		m_localVelocity += groundFriction;
+	} else {
+		btVector3 dragFriction = -m_drag * m_localVelocity;
+		m_localVelocity += dragFriction;
 	}
 
 	m_localVelocity += m_acceleration;
