@@ -322,7 +322,7 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 	/* FIXME: Handle penetration properly */
 	start.setOrigin(m_currentPosition);
 
-	m_targetPosition = m_currentPosition + m_up * (stepHeight) + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
+	m_targetPosition = m_currentPosition + m_up * (stepHeight);// + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
 	m_currentPosition = m_targetPosition;
 
 	end.setOrigin(m_targetPosition);
@@ -715,29 +715,32 @@ const btVector3 &hbrKinematicCharacterController::getAngularVelocity() const
 
 void hbrKinematicCharacterController::setLinearVelocity(const btVector3 &velocity)
 {
-	m_walkDirection = velocity;
 
-	// HACK: if we are moving in the direction of the up, treat it as a jump :(
-	if (m_walkDirection.length2() > 0)
-	{
-		btVector3 w = velocity.normalized();
-		btScalar c = w.dot(m_up);
-		if (c != 0)
-		{
-			//there is a component in walkdirection for vertical velocity
-			btVector3 upComponent = m_up * (btSin(SIMD_HALF_PI - btAcos(c)) * m_walkDirection.length());
-			m_walkDirection -= upComponent;
-			m_verticalVelocity = (c < 0.0f ? -1 : 1) * upComponent.length();
+	m_localVelocity = velocity;
 
-			if (c > 0.0f)
-			{
-				m_wasJumping = true;
-				m_jumpPosition = m_ghostObject->getWorldTransform().getOrigin();
-			}
-		}
-	}
-	else
-		m_verticalVelocity = 0.0f;
+	// m_walkDirection = velocity;
+
+	// // HACK: if we are moving in the direction of the up, treat it as a jump :(
+	// if (m_walkDirection.length2() > 0)
+	// {
+	// 	btVector3 w = velocity.normalized();
+	// 	btScalar c = w.dot(m_up);
+	// 	if (c != 0)
+	// 	{
+	// 		//there is a component in walkdirection for vertical velocity
+	// 		btVector3 upComponent = m_up * (btSin(SIMD_HALF_PI - btAcos(c)) * m_walkDirection.length());
+	// 		m_walkDirection -= upComponent;
+	// 		m_verticalVelocity = (c < 0.0f ? -1 : 1) * upComponent.length();
+
+	// 		if (c > 0.0f)
+	// 		{
+	// 			m_wasJumping = true;
+	// 			m_jumpPosition = m_ghostObject->getWorldTransform().getOrigin();
+	// 		}
+	// 	}
+	// }
+	// else
+	// 	m_verticalVelocity = 0.0f;
 }
 
 btVector3 hbrKinematicCharacterController::getLinearVelocity() const
@@ -820,10 +823,16 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	inheritVelocity(collisionWorld, dt);
 
-	if (!m_onGround)
+	if (!m_onGround && m_externalVelocity.length2() > 0.0)
 	{
+		if(m_wasJumping && m_externalVelocity.y() < 0.0) {
+			m_externalVelocity.setY(0.0);
+		}
+		
 		m_localVelocity += m_externalVelocity;
 		m_externalVelocity.setZero();
+
+		printf("m_localVelocity(%f,%f,%f)\n", m_localVelocity[0],m_localVelocity[1],m_localVelocity[2]);
 	}
 
 	btScalar speed = m_speedModifier * (m_wasOnGround ? m_groundSpeed : m_airSpeed);
@@ -844,15 +853,15 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	m_localVelocity += m_acceleration;
 
-	if (m_localVelocity.y() > 0.0 && m_localVelocity.y() > m_jumpSpeed)
-	{
-		m_localVelocity.setY(m_jumpSpeed);
-	}
+	// if (m_localVelocity.y() > 0.0 && m_localVelocity.y() > m_jumpSpeed)
+	// {
+	// 	m_localVelocity.setY(m_jumpSpeed);
+	// }
 
-	if (m_localVelocity.y() < 0.0 && btFabs(m_localVelocity.y()) > btFabs(m_fallSpeed))
-	{
-		m_localVelocity.setY(-btFabs(m_fallSpeed));
-	}
+	// if (m_localVelocity.y() < 0.0 && btFabs(m_localVelocity.y()) > btFabs(m_fallSpeed))
+	// {
+	// 	m_localVelocity.setY(-btFabs(m_fallSpeed));
+	// }
 
 
 	m_moveOffset = m_localVelocity * dt + m_externalVelocity * dt;
@@ -932,8 +941,13 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 	btVector3 startVec = m_currentPosition + m_externalVelocity * dt * 0.5;
 
 	if(m_wasJumping && m_localVelocity.y() > SIMD_EPSILON){
+		// if(m_externalVelocity.y() < 0.0){
+		// 	m_externalVelocity.setY(0.0);
+		// }
+		// printf("Jump=%f\n", m_externalVelocity.y());
 		return;
 	}
+
 
 	//btMax(m_stepHeight, m_externalVelocity.y() * dt)
 
@@ -970,7 +984,7 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 		// if(newVelocity.y() - m_externalVelocity.y() < -m_fallSpeed){
 		// 	return;
 		// }
-
+		
 		m_externalVelocity = newVelocity;
 		m_onGround = true;
 	}
@@ -1108,6 +1122,10 @@ void hbrKinematicCharacterController::jump(const btVector3 &v)
 	m_jumpAxis = v.length2() == 0 ? m_up : v.normalized();
 
 	m_jumpPosition = m_ghostObject->getWorldTransform().getOrigin();
+
+	if(m_localVelocity.y() < 0.0){
+		m_localVelocity.setY(0.0);
+	}
 
 	m_localVelocity += m_jumpAxis * m_verticalVelocity;
 #if 0
