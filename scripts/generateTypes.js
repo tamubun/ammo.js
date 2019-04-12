@@ -67,6 +67,7 @@ function mapIdlTypeToTSType(typedefs, name) {
         case "double":
         case "unrestricted double":
         case "DOMTimeStamp":
+        case "VoidPtr":
             return "number";
 
         case "DOMString":
@@ -88,9 +89,11 @@ function getTSType(idlType, typedefs) {
     if (typeof idlType === "string") return mapIdlTypeToTSType(typedefs, idlType);
     
     var name = getTSType(idlType.idlType, typedefs);
+
     if (idlType.sequence || idlType.array) {
         return name + "[]";
     }
+    
     return name;
 }
 
@@ -115,17 +118,15 @@ function printInterfaces(interfaces, typedefs) {
 
     interfaces.forEach(function (interf) {
         
-        print("interface ");
+        print("export class ");
         print(interf.name);
 
-        console.log(interf.members);
-        
-        
-        if (interf.inheritance !== null) {
-            print(" extends ", interf.inheritance);
+        if(interf.inheritance){
+            print(` extends ${interf.inheritance.name} `);
         }
         
         print(" {\n");
+        
         
         if (Object.keys(interf.members).length === 0) {
             //issue #1: Interfaces without members are considered "the same", 
@@ -168,20 +169,49 @@ function printInterfaces(interfaces, typedefs) {
                     print(";\n");
                 });
             }
+
+            function printAttributes(attributes) {
+                for(const attribute of attributes){
+                    var type = attribute.idlType || attribute.type;
+                    
+                    whitespace();
+                    print(`get_${attribute.name}(): `);
+                    printTSType(type);
+                    print(";\n");
+
+                    whitespace();
+                    print(`set_${attribute.name}(value: ${getTSType(type, typedefs)}): void`);
+                    print(";\n");
+                    
+                }
+            }
             
             function printOperations(ops) {
                 "use strict";
                 
                 ops.forEach(function (op) {
+                    let isConstructor = false;
+
                     whitespace();
                     if (interf.type !== "callback interface") {
-                        print(op.name);
+                        if(op.name === interf.name){
+                            isConstructor = true;
+                            print('constructor');
+                        } else {
+                            print(op.name);
+                        }
                     }
                     print("(");
-                    print(getArgs(op.arguments, typedefs));
-                    print("): ");
-                    print(getTSType(op.idlType, typedefs));
+                    print(getArgs(op.body.arguments, typedefs));
+                    if(isConstructor){
+                        print(")");
+                    } else {
+                        print("): ");
+                        print(getTSType(op.body.idlType, typedefs));
+                    }
+                    
                     print(";\n");
+                    
                 });
             }
             
@@ -190,10 +220,13 @@ function printInterfaces(interfaces, typedefs) {
             var operations = members.filter(function (member) { return member.type === "operation" && !member.stringifier; });
             var dicAttributes = members.filter(function (member) { return member.type === "field"; });
             
-            printMembers(constants);
-            printMembers(attributes);
+
+            
+            
             printMembers(dicAttributes);
+            printMembers(constants);
             printOperations(operations);
+            printAttributes(attributes);
         }
     });
 }
@@ -245,6 +278,7 @@ function printModuleMember(module) {
         printModuleMember(submodules);
         printCallbacks(callbacks, typedefs);
     }
+    
 }
 
 (function () {
@@ -258,8 +292,26 @@ function printModuleMember(module) {
         return;
     }
     
-    idl = fs.readFileSync(process.argv[2]).toString();
+    idl = fs.readFileSync(process.argv[2]).toString()
+        .replace(/[A-z0-9]+ implements [A-z0-9]+;/ig, '')
+        .replace(/\[Ref\] optional /ig, 'optional [Ref]')
+        .replace(/\[Const, Ref\] optional /ig, 'optional [Const, Ref]')
+        // .replace(/float\[\] /ig, 'sequence<float> '); 
     module = WebIDL2.parse(idl);
-    //	print(JSON.stringify(module)); 
+    // print(JSON.stringify(module)); 
+    
+    print("declare module Ammo {\n");
+    print("function destroy(type: any): void;\n");
+    print("function getPointer(obj: any): number;\n");
+
     printModuleMember(module);
+
+    print("}\n");
+
+    // console.log('Press any key to exit');
+
+    // process.stdin.setRawMode(true);
+    // process.stdin.resume();
+    // process.stdin.on('data', process.exit.bind(process, 0));
 }());
+

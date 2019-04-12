@@ -47,7 +47,7 @@ interface btVector3 {
   [Operator="-=", Ref] btVector3 op_sub([Ref] btVector3 v);
 };
 
-interface btVector4 {
+interface btVector4: btVector3 {
   void btVector4();
   void btVector4(float x, float y, float z, float w);
   float w();
@@ -66,7 +66,7 @@ interface btQuadWord {
   void setW(float w);
 };
 
-interface btQuaternion {
+interface btQuaternion: btQuadWord {
   void btQuaternion(float x, float y, float z, float w);
   void setValue(float x, float y, float z, float w);
   void setEulerZYX(float z, float y, float x);
@@ -106,7 +106,7 @@ interface btTransform {
   [Ref] btVector3 getOrigin();
   [Value] btQuaternion getRotation();
   [Ref] btMatrix3x3 getBasis();
-  void setFromOpenGLMatrix(float[] m);
+  // void setFromOpenGLMatrix(float[] m);
   [Value] btTransform inverse();
   [Operator="*=", Ref] btTransform op_mul([Ref] btTransform t);
 };
@@ -116,7 +116,7 @@ interface btMotionState {
   void setWorldTransform([Ref] btTransform worldTrans);
 };
 
-interface btDefaultMotionState {
+interface btDefaultMotionState: btMotionState {
   void btDefaultMotionState([Ref] optional btTransform startTrans, [Ref] optional btTransform centerOfMassOffset);
   [Value] attribute btTransform m_graphicsWorldTrans;
 };
@@ -169,7 +169,7 @@ interface RayResultCallback {
 };
 
 [Prefix="btCollisionWorld::"]
-interface ClosestRayResultCallback {
+interface ClosestRayResultCallback: RayResultCallback {
   void ClosestRayResultCallback([Const, Ref] btVector3 from, [Const, Ref] btVector3 to);
 
   [Value] attribute btVector3 m_rayFromWorld;
@@ -228,7 +228,7 @@ interface ConvexResultCallback {
 };
 
 [Prefix="btCollisionWorld::"]
-interface ClosestConvexResultCallback {
+interface ClosestConvexResultCallback: ConvexResultCallback {
   void ClosestConvexResultCallback([Const, Ref] btVector3 convexFromWorld, [Const, Ref] btVector3 convexToWorld);
 
   [Value] attribute btVector3 m_convexFromWorld;
@@ -246,23 +246,23 @@ interface btCollisionShape {
   float getMargin();
 };
 
-interface btConvexShape {
+interface btConvexShape: btCollisionShape {
 };
 btConvexShape implements btCollisionShape;
 
-interface btConvexTriangleMeshShape {
+interface btConvexTriangleMeshShape: btConvexShape {
   void btConvexTriangleMeshShape(btStridingMeshInterface meshInterface, optional boolean calcAabb);
 };
 btConvexTriangleMeshShape implements btConvexShape;
 
-interface btBoxShape {
+interface btBoxShape: btCollisionShape {
   void btBoxShape([Ref] btVector3 boxHalfExtents);
   void setMargin(float margin);
   float getMargin();
 };
 btBoxShape implements btCollisionShape;
 
-interface btCapsuleShape {
+interface btCapsuleShape: btCollisionShape {
   void btCapsuleShape(float radius, float height);
   void setMargin(float margin);
   float getMargin();
@@ -272,49 +272,49 @@ interface btCapsuleShape {
 };
 btCapsuleShape implements btCollisionShape;
 
-interface btCapsuleShapeX {
+interface btCapsuleShapeX: btCapsuleShape {
   void btCapsuleShapeX(float radius, float height);
   void setMargin(float margin);
   float getMargin();
 };
 btCapsuleShapeX implements btCapsuleShape;
 
-interface btCapsuleShapeZ {
+interface btCapsuleShapeZ: btCapsuleShape {
   void btCapsuleShapeZ(float radius, float height);
   void setMargin(float margin);
   float getMargin();
 };
 btCapsuleShapeZ implements btCapsuleShape;
 
-interface btCylinderShape {
+interface btCylinderShape: btCollisionShape {
   void btCylinderShape([Ref] btVector3 halfExtents);
   void setMargin(float margin);
   float getMargin();
 };
 btCylinderShape implements btCollisionShape;
 
-interface btCylinderShapeX {
+interface btCylinderShapeX: btCylinderShape {
   void btCylinderShapeX([Ref] btVector3 halfExtents);
   void setMargin(float margin);
   float getMargin();
 };
 btCylinderShapeX implements btCylinderShape;
 
-interface btCylinderShapeZ {
+interface btCylinderShapeZ: btCylinderShape {
   void btCylinderShapeZ([Ref] btVector3 halfExtents);
   void setMargin(float margin);
   float getMargin();
 };
 btCylinderShapeZ implements btCylinderShape;
 
-interface btSphereShape {
+interface btSphereShape: btCollisionShape {
   void btSphereShape(float radius);
   void setMargin(float margin);
   float getMargin();
 };
 btSphereShape implements btCollisionShape;
 
-interface btConeShape {
+interface btConeShape: btCollisionShape {
   void btConeShape(float radius, float height);
 };
 btConeShape implements btCollisionShape;
@@ -326,7 +326,7 @@ interface btIntArray {
 
 interface btFace {
   [Value] attribute btIntArray m_indices;
-  attribute float[] m_plane;
+  // attribute float[] m_plane;
 };
 
 interface btVector3Array {
@@ -344,8 +344,9 @@ interface btConvexPolyhedron {
   [Value] attribute btFaceArray m_faces;
 };
 
-interface btConvexHullShape {
-  void btConvexHullShape([Const] optional float[] points, optional long numPoints);
+interface btConvexHullShape: btCollisionShape {
+  // void btConvexHullShape([Const] optional float[] points, optional long numPoints);
+  void btConvexHullShape();
   void addPoint([Const, Ref] btVector3 point, optional boolean recalculateLocalAABB);
   void setMargin(float margin);
   float getMargin();
@@ -363,17 +364,17 @@ interface btShapeHull {
   [Const] btVector3 getVertexPointer();
 };
 
-interface btConeShapeX {
+interface btConeShapeX: btConeShape {
   void btConeShapeX(float radius, float height);
 };
 btConeShapeX implements btConeShape;
 
-interface btConeShapeZ {
+interface btConeShapeZ: btConeShape {
   void btConeShapeZ(float radius, float height);
 };
 btConeShapeZ implements btConeShape;
 
-interface btCompoundShape {
+interface btCompoundShape: btCollisionShape {
   void btCompoundShape(optional boolean enableDynamicAabbTree);
   void addChildShape([Const, Ref] btTransform localTransform, btCollisionShape shape);
   void removeChildShapeByIndex(long childShapeindex);
@@ -391,7 +392,7 @@ interface btStridingMeshInterface {
   void setScaling([Const, Ref] btVector3 scaling);
 };
 
-interface btTriangleMesh {
+interface btTriangleMesh: btStridingMeshInterface {
   void btTriangleMesh(optional boolean use32bitIndices, optional boolean use4componentVertices);
   void addTriangle([Const, Ref] btVector3 vertex0, [Const, Ref] btVector3 vertex1, [Const, Ref] btVector3 vertex2, optional boolean removeDuplicateVertices);
   void findOrAddVertex([Const, Ref] btVector3 vertex, boolean removeDuplicateVertices);
@@ -408,25 +409,25 @@ enum PHY_ScalarType {
     "PHY_UCHAR"
 };
 
-interface btConcaveShape {
+interface btConcaveShape: btCollisionShape {
 };
 btConcaveShape implements btCollisionShape;
 
-interface btStaticPlaneShape {
+interface btStaticPlaneShape: btConcaveShape {
   void btStaticPlaneShape([Const, Ref] btVector3 planeNormal, float planeConstant);
 };
 btStaticPlaneShape implements btConcaveShape;
 
-interface btTriangleMeshShape {
+interface btTriangleMeshShape: btConcaveShape {
 };
 btTriangleMeshShape implements btConcaveShape;
 
-interface btBvhTriangleMeshShape {
+interface btBvhTriangleMeshShape: btTriangleMeshShape {
   void btBvhTriangleMeshShape(btStridingMeshInterface meshInterface, boolean useQuantizedAabbCompression, optional boolean buildBvh);
 };
 btBvhTriangleMeshShape implements btTriangleMeshShape;
 
-interface btHeightfieldTerrainShape {
+interface btHeightfieldTerrainShape: btConcaveShape {
     void btHeightfieldTerrainShape(long heightStickWidth, long heightStickLength, VoidPtr heightfieldData, float heightScale, float minHeight, float maxHeight, long upAxis, PHY_ScalarType hdt, boolean flipQuadEdges);
     void setMargin(float margin);
     float getMargin();
@@ -437,9 +438,10 @@ interface btDefaultCollisionConstructionInfo {
   void btDefaultCollisionConstructionInfo();
 };
 
-interface btDefaultCollisionConfiguration {
+interface btDefaultCollisionConfiguration: btCollisionConfiguration {
   void btDefaultCollisionConfiguration([Ref] optional btDefaultCollisionConstructionInfo info);
 };
+btDefaultCollisionConfiguration implements btCollisionConfiguration;
 
 interface btPersistentManifold {
   void btPersistentManifold();
@@ -454,7 +456,7 @@ interface btDispatcher {
   btPersistentManifold getManifoldByIndexInternal(long index);
 };
 
-interface btCollisionDispatcher {
+interface btCollisionDispatcher: btDispatcher {
   void btCollisionDispatcher(btDefaultCollisionConfiguration conf);
 };
 btCollisionDispatcher implements btDispatcher;
@@ -476,9 +478,10 @@ interface btBroadphaseInterface {
 interface btCollisionConfiguration {
 };
 
-interface btDbvtBroadphase {
+interface btDbvtBroadphase: btBroadphaseInterface {
   void btDbvtBroadphase();
 };
+btDbvtBroadphase implements btBroadphaseInterface;
 
 interface btBroadphaseProxy {
   attribute long m_collisionFilterGroup;
@@ -505,7 +508,7 @@ interface btRigidBodyConstructionInfo {
   attribute float m_additionalAngularDampingFactor;
 };
 
-interface btRigidBody {
+interface btRigidBody: btCollisionObject {
   void btRigidBody([Const, Ref] btRigidBodyConstructionInfo constructionInfo);
 
   [Const, Ref] btTransform getCenterOfMassTransform();
@@ -563,7 +566,7 @@ enum btConstraintParams {
   "BT_CONSTRAINT_STOP_CFM"
 };
 
-interface btPoint2PointConstraint {
+interface btPoint2PointConstraint: btTypedConstraint {
   void btPoint2PointConstraint([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Ref] btVector3 pivotInA, [Ref] btVector3 pivotInB);
   void btPoint2PointConstraint([Ref] btRigidBody rbA, [Ref] btVector3 pivotInA);
   void setPivotA([Const, Ref] btVector3 pivotA);
@@ -575,7 +578,7 @@ interface btPoint2PointConstraint {
 };
 btPoint2PointConstraint implements btTypedConstraint;
 
-interface btGeneric6DofConstraint {
+interface btGeneric6DofConstraint: btTypedConstraint {
   void btGeneric6DofConstraint([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Ref] btTransform frameInA, [Ref] btTransform frameInB, boolean useLinearFrameReferenceFrameA);
   void btGeneric6DofConstraint([Ref] btRigidBody rbB, [Ref] btTransform frameInB, boolean useLinearFrameReferenceFrameB);
   void setLinearLowerLimit([Const, Ref] btVector3 linearLower);
@@ -586,7 +589,7 @@ interface btGeneric6DofConstraint {
 };
 btGeneric6DofConstraint implements btTypedConstraint;
 
-interface btGeneric6DofSpringConstraint {
+interface btGeneric6DofSpringConstraint: btGeneric6DofConstraint {
   void btGeneric6DofSpringConstraint([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Ref] btTransform frameInA, [Ref] btTransform frameInB, boolean useLinearFrameReferenceFrameA);
   void btGeneric6DofSpringConstraint([Ref] btRigidBody rbB, [Ref] btTransform frameInB, boolean useLinearFrameReferenceFrameB);
   void enableSpring(long index, boolean onOff);
@@ -595,11 +598,12 @@ interface btGeneric6DofSpringConstraint {
 };
 btGeneric6DofSpringConstraint implements btGeneric6DofConstraint;
 
-interface btSequentialImpulseConstraintSolver {
+interface btSequentialImpulseConstraintSolver: btConstraintSolver {
   void btSequentialImpulseConstraintSolver();
 };
+btSequentialImpulseConstraintSolver implements btConstraintSolver;
 
-interface btConeTwistConstraint {
+interface btConeTwistConstraint: btTypedConstraint {
   void btConeTwistConstraint([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Ref] btTransform rbAFrame, [Ref] btTransform rbBFrame);
   void btConeTwistConstraint([Ref] btRigidBody rbA, [Ref] btTransform rbAFrame);
 
@@ -614,7 +618,7 @@ interface btConeTwistConstraint {
 };
 btConeTwistConstraint implements btTypedConstraint;
 
-interface btHingeConstraint {
+interface btHingeConstraint: btTypedConstraint {
   void btHingeConstraint ([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Ref] btVector3 pivotInA, [Ref] btVector3 pivotInB, [Ref] btVector3 axisInA, [Ref] btVector3 axisInB, optional boolean useReferenceFrameA);
   //void btHingeConstraint ([Ref] btRigidBody rbA, [Ref] btVector3 pivotInA, [Ref] btVector3 axisInA, optional boolean useReferenceFrameA);
   void btHingeConstraint ([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Ref] btTransform rbAFrame, [Ref] btTransform rbBFrame, optional boolean useReferenceFrameA);
@@ -631,7 +635,7 @@ interface btHingeConstraint {
 };
 btHingeConstraint implements btTypedConstraint;
 
-interface btSliderConstraint {
+interface btSliderConstraint: btTypedConstraint {
   void btSliderConstraint([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Const,Ref] btTransform frameInA, [Const,Ref] btTransform frameInB, boolean useLinearReferenceFrameA);
   void btSliderConstraint([Ref] btRigidBody rbB, [Const,Ref] btTransform frameInB, boolean useLinearReferenceFrameA);
   void setLowerLinLimit(float lowerLimit);
@@ -641,7 +645,7 @@ interface btSliderConstraint {
 };
 btSliderConstraint implements btTypedConstraint;
 
-interface btFixedConstraint {
+interface btFixedConstraint: btTypedConstraint {
   void btFixedConstraint([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Const,Ref] btTransform frameInA, [Const,Ref] btTransform frameInB);
 };
 btFixedConstraint implements btTypedConstraint;
@@ -687,14 +691,14 @@ interface btContactSolverInfo {
   attribute long m_numIterations;
 };
 
-interface btDynamicsWorld {
+interface btDynamicsWorld: btCollisionWorld {
   void addAction(btActionInterface action);
   void removeAction(btActionInterface action);
   [Ref] btContactSolverInfo getSolverInfo();
 };
 btDynamicsWorld implements btCollisionWorld;
 
-interface btDiscreteDynamicsWorld {
+interface btDiscreteDynamicsWorld: btDynamicsWorld {
   void btDiscreteDynamicsWorld(btDispatcher dispatcher, btBroadphaseInterface pairCache, btConstraintSolver constraintSolver, btCollisionConfiguration collisionConfiguration);
 
   void setGravity([Ref] btVector3 gravity);
@@ -738,7 +742,7 @@ interface btVehicleRaycaster {
     void castRay ([Const, Ref] btVector3 from, [Const, Ref] btVector3 to, [Ref] btVehicleRaycasterResult result);
 };
 
-interface btDefaultVehicleRaycaster {
+interface btDefaultVehicleRaycaster: btVehicleRaycaster {
   void btDefaultVehicleRaycaster(btDynamicsWorld world);
 };
 btDefaultVehicleRaycaster implements btVehicleRaycaster;
@@ -839,14 +843,11 @@ interface btActionInterface {
 // };
 // btKinematicCharacterController implements btActionInterface;
 
-interface hbrKinematicCharacterController {
-  void hbrKinematicCharacterController(btPairCachingGhostObject ghostObject, btConvexShape convexShape, float stepHeight, [Const,Ref] optional btVector3 upAxis);
+interface hbrKinematicCharacterController: btActionInterface {
+  void hbrKinematicCharacterController(btPairCachingGhostObject ghostObject, btConvexShape convexShape, float stepHeight, [Const, Ref] optional btVector3 upAxis);
 
   void setUp ([Const,Ref] btVector3 up);
   void applyImpulse([Const,Ref] btVector3 v);
-  void applyCentralImpulse([Const, Ref] btVector3 force);
-  void applyCentralForce([Const, Ref] btVector3 force);
-
   void setWalkDirection ([Const,Ref] btVector3 walkDirection);
   //void reset ();
   void warp ([Const, Ref] btVector3 origin);
@@ -873,7 +874,6 @@ interface hbrKinematicCharacterController {
   boolean onGround ();
   void setLinearVelocity ([Const,Ref] btVector3 velocity);
   [Value] btVector3 getLinearVelocity();
-  [Value] btVector3 getLocalLinearVelocity();
   void setLinearDamping(float d);
   float getLinearDamping();
   void setAngularDamping(float d);
@@ -882,7 +882,7 @@ interface hbrKinematicCharacterController {
 };
 hbrKinematicCharacterController implements btActionInterface;
 
-interface btRaycastVehicle {
+interface btRaycastVehicle: btActionInterface {
   void btRaycastVehicle([Const, Ref] btVehicleTuning tuning, btRigidBody chassis, btVehicleRaycaster raycaster);
   void applyEngineForce(float force, long wheel);
   void setSteeringValue(float steering, long wheel);
@@ -915,22 +915,22 @@ interface btRaycastVehicle {
 };
 btRaycastVehicle implements btActionInterface;
 
-interface btGhostObject {
+interface btGhostObject: btCollisionObject {
   void btGhostObject();
   long getNumOverlappingObjects();
   btCollisionObject getOverlappingObject(long index);
 };
 btGhostObject implements btCollisionObject;
 
-interface btPairCachingGhostObject {
+interface btPairCachingGhostObject: btGhostObject {
   void btPairCachingGhostObject();
 };
 btPairCachingGhostObject implements btGhostObject;
 
-interface btGhostPairCallback {
+interface btGhostPairCallback: btOverlappingPairCallback {
   void btGhostPairCallback();
 };
-
+btGhostPairCallback implements btOverlappingPairCallback;
 
 // soft bodies
 

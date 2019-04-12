@@ -16,6 +16,6 @@
     "webidl2": "^18.0.1"
   },
   "scripts": {
-    "generate-types": "node ./scripts/generateTypes.js ./test.idl"
+    "generate-types": "node ./scripts/generateTypes.js ./ammo.idl > ammo.d.ts"
   }
 }
