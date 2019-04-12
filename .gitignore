@@ -2,3 +2,4 @@ bullet/build
 *.diff
 .vscode/ipch
 *.pyc
+node_modules

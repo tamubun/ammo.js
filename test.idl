@@ -1,0 +1,25 @@
+interface btVector3 {
+  void btVector3();
+  void btVector3(float x, float y, float z);
+  void setZero();
+  boolean isZero();
+  boolean fuzzyZero();
+  float distance([Const, Ref] btVector3 v);
+  float distance2([Const, Ref] btVector3 v);
+  float length();
+  float length2();
+  float x();
+  float y();
+  float z();
+  void setX(float x);
+  void setY(float y);
+  void setZ(float z);
+  void setValue(float x, float y, float z);
+  void normalize();
+  [Value] btVector3 cross([Ref] btVector3 v);
+  [Value] btVector3 rotate([Ref] btVector3 wAxis, float angle);
+  float dot([Ref] btVector3 v);
+  [Operator="*=", Ref] btVector3 op_mul(float x);
+  [Operator="+=", Ref] btVector3 op_add([Ref] btVector3 v);
+  [Operator="-=", Ref] btVector3 op_sub([Ref] btVector3 v);
+};

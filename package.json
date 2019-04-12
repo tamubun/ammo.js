@@ -11,5 +11,11 @@
   "bugs": {
     "url": "https://github.com/kripken/ammo.js/issues"
   },
-  "homepage": "https://github.com/kripken/ammo.js"
+  "homepage": "https://github.com/kripken/ammo.js",
+  "devDependencies": {
+    "webidl2": "^18.0.1"
+  },
+  "scripts": {
+    "generate-types": "node ./scripts/generateTypes.js ./test.idl"
+  }
 }
