@@ -844,6 +844,9 @@ interface hbrKinematicCharacterController {
 
   void setUp ([Const,Ref] btVector3 up);
   void applyImpulse([Const,Ref] btVector3 v);
+  void applyCentralImpulse([Const, Ref] btVector3 force);
+  void applyCentralForce([Const, Ref] btVector3 force);
+
   void setWalkDirection ([Const,Ref] btVector3 walkDirection);
   //void reset ();
   void warp ([Const, Ref] btVector3 origin);

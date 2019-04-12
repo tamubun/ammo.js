@@ -323,7 +323,7 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 	start.setOrigin(m_currentPosition);
 
 	m_targetPosition = m_currentPosition + m_up * (stepHeight);// + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
-	m_currentPosition = m_targetPosition;
+	// m_currentPosition = m_targetPosition;
 
 	end.setOrigin(m_targetPosition);
 
@@ -345,9 +345,12 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 
 	if (callback.hasHit() && m_ghostObject->hasContactResponse() && needsCollision(m_ghostObject, callback.m_hitCollisionObject))
 	{
+		// printf("Step_m_hitNormalWorld=%f,%f,%f\n",callback.m_hitNormalWorld[0],callback.m_hitNormalWorld[1],callback.m_hitNormalWorld[2]);
+
 		// Only modify the position if the hit was a slope and not a wall or ceiling.
 		if (callback.m_hitNormalWorld.dot(m_up) > 0.0)
 		{
+
 			// we moved up only a fraction of the step height
 			m_currentStepOffset = stepHeight * callback.m_closestHitFraction;
 			if (m_interpolateUp == true)
@@ -380,6 +383,7 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 		{
 			m_verticalOffset = 0.0;
 			m_verticalVelocity = 0.0;
+			m_localVelocity.setY(0.0);
 			m_currentStepOffset = m_stepHeight;
 		}
 	}
@@ -891,7 +895,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	btVector3 deltaPosition = m_currentPosition - currentPosition;
 	m_localVelocity = deltaPosition / dt - m_externalVelocity;
 
-	if(!m_onGround){
+	if(!m_onGround && m_verticalVelocity < 0.0){
 		m_localVelocity.setY(m_verticalVelocity);
 	}else {
 		m_verticalVelocity = m_localVelocity.y();
@@ -982,6 +986,12 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 		btVector3 newVelocity = angularVelocity.cross(localPosition) + linearVel;
 
 		// if(newVelocity.y() - m_externalVelocity.y() < -m_fallSpeed){
+		// 	return;
+		// }
+
+		// if(newVelocity.y() - m_externalVelocity.y() > m_gravity * dt) {
+		// 	newVelocity.setY(m_externalVelocity.y());
+		// 	m_externalVelocity = newVelocity;
 		// 	return;
 		// }
 		

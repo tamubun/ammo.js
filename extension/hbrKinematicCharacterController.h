@@ -203,6 +203,8 @@ public:
 	void jump(const btVector3& v = btVector3(0, 0, 0));
 
 	void applyImpulse(const btVector3& v) { jump(v); }
+	void applyCentralImpulse(const btVector3& v) { m_velocity += v; }
+	void applyCentralForce(const btVector3& v) { m_acceleration += v; }
 
 	void setGravity(const btVector3& gravity);
 	btVector3 getGravity() const;
