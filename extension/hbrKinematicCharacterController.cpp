@@ -841,7 +841,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		m_localVelocity += m_externalVelocity;
 		m_externalVelocity.setZero();
 
-		printf("m_localVelocity(%f,%f,%f)\n", m_localVelocity[0],m_localVelocity[1],m_localVelocity[2]);
+		// printf("m_localVelocity(%f,%f,%f)\n", m_localVelocity[0],m_localVelocity[1],m_localVelocity[2]);
 	}
 
 	btScalar speed = m_speedModifier * (m_wasOnGround ? m_groundSpeed : m_airSpeed);
