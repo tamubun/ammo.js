@@ -873,6 +873,7 @@ interface hbrKinematicCharacterController {
   boolean onGround ();
   void setLinearVelocity ([Const,Ref] btVector3 velocity);
   [Value] btVector3 getLinearVelocity();
+  [Value] btVector3 getLocalLinearVelocity();
   void setLinearDamping(float d);
   float getLinearDamping();
   void setAngularDamping(float d);

@@ -749,6 +749,11 @@ void hbrKinematicCharacterController::setLinearVelocity(const btVector3 &velocit
 
 btVector3 hbrKinematicCharacterController::getLinearVelocity() const
 {
+	return m_localVelocity + m_externalVelocity;
+}
+
+btVector3 hbrKinematicCharacterController::getLocalLinearVelocity() const
+{
 	return m_localVelocity;
 }
 

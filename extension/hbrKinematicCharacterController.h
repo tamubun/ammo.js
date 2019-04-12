@@ -168,6 +168,7 @@ public:
 	virtual const btVector3& getAngularVelocity() const;
 
 	virtual void setLinearVelocity(const btVector3& velocity);
+	virtual btVector3 getLocalLinearVelocity() const;
 	virtual btVector3 getLinearVelocity() const;
 
 	void setLinearDamping(btScalar d) { m_linearDamping = btClamped(d, (btScalar)btScalar(0.0), (btScalar)btScalar(1.0)); }
