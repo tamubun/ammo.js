@@ -69,8 +69,16 @@ protected:
 	btVector3 m_moveOffset;
 	btVector3 m_acceleration;
 
-	btScalar m_groundSpeed;
-	btScalar m_airSpeed;
+	btScalar m_walkMaxSpeed;
+	btScalar m_runMaxSpeed;
+	btScalar m_airMaxSpeed;
+	btScalar m_flyMaxSpeed;
+
+	btScalar m_walkAcceleration;
+	btScalar m_runAcceleration;
+	btScalar m_airAcceleration;
+	btScalar m_flyAcceleration;
+
 	btScalar m_friction;
 	btScalar m_drag;
 	btScalar m_currentSpeed;
@@ -182,8 +190,15 @@ public:
 	void preStep(btCollisionWorld * collisionWorld);
 	void playerStep(btCollisionWorld * collisionWorld, btScalar dt);
 
-	void setGroundSpeed(btScalar groundSpeed);
-	void setAirSpeed(btScalar airSpeed);
+	void setMaxWalkSpeed (btScalar speed);
+	void setMaxRunSpeed (btScalar speed);
+	void setMaxAirSpeed (btScalar speed);
+	void setMaxFlySpeed (btScalar speed);
+
+	void setWalkAcceleration (btScalar acceleration);
+	void setRunAcceleration (btScalar acceleration);
+	void setAirAcceleration (btScalar acceleration);
+	void setFlyAcceleration (btScalar acceleration);
 
 	void inheritVelocity(btCollisionWorld* collisionWorld, btScalar dt);
 	void testCollisions(btCollisionWorld* collisionWorld);

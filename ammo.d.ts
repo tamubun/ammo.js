@@ -853,8 +853,14 @@ export class hbrKinematicCharacterController extends btActionInterface  {
 	setFallSpeed(fallSpeed: number): void;
 	setJumpSpeed(jumpSpeed: number): void;
 	setMaxJumpHeight(maxJumpHeight: number): void;
-	setGroundSpeed(groundSpeed: number): void;
-	setAirSpeed(airSpeed: number): void;
+	setMaxWalkSpeed(speed: number): void;
+	setMaxRunSpeed(speed: number): void;
+	setMaxAirSpeed(speed: number): void;
+	setMaxFlySpeed(speed: number): void;
+	setWalkAcceleration(acceleration: number): void;
+	setRunAcceleration(acceleration: number): void;
+	setAirAcceleration(acceleration: number): void;
+	setFlyAcceleration(acceleration: number): void;
 	setSpeedModifier(speed: number): void;
 	setAirWalking(enabled: boolean): void;
 	setFriction(friction: number): void;
@@ -870,6 +876,7 @@ export class hbrKinematicCharacterController extends btActionInterface  {
 	onGround(): boolean;
 	setLinearVelocity(velocity: btVector3): void;
 	getLinearVelocity(): btVector3;
+	getLocalLinearVelocity(): btVector3;
 	setLinearDamping(d: number): void;
 	getLinearDamping(): number;
 	setAngularDamping(d: number): void;

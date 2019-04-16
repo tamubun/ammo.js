@@ -857,8 +857,17 @@ interface hbrKinematicCharacterController: btActionInterface {
   void setFallSpeed (float fallSpeed);
   void setJumpSpeed (float jumpSpeed);
   void setMaxJumpHeight (float maxJumpHeight);
-  void setGroundSpeed (float groundSpeed);
-  void setAirSpeed (float airSpeed);
+
+  void setMaxWalkSpeed (float speed);
+  void setMaxRunSpeed (float speed);
+  void setMaxAirSpeed (float speed);
+  void setMaxFlySpeed (float speed);
+
+  void setWalkAcceleration (float acceleration);
+  void setRunAcceleration (float acceleration);
+  void setAirAcceleration (float acceleration);
+  void setFlyAcceleration (float acceleration);
+
   void setSpeedModifier (float speed);
   void setAirWalking (boolean enabled);
   void setFriction (float friction);
@@ -874,6 +883,7 @@ interface hbrKinematicCharacterController: btActionInterface {
   boolean onGround ();
   void setLinearVelocity ([Const,Ref] btVector3 velocity);
   [Value] btVector3 getLinearVelocity();
+  [Value] btVector3 getLocalLinearVelocity();
   void setLinearDamping(float d);
   float getLinearDamping();
   void setAngularDamping(float d);

@@ -205,8 +205,17 @@ hbrKinematicCharacterController::hbrKinematicCharacterController(btPairCachingGh
 	m_velocity.setValue(0.0, 0.0, 0.0);
 	m_moveOffset.setValue(0.0, 0.0, 0.0);
 	m_acceleration.setValue(0.0, 0.0, 0.0);
-	m_groundSpeed = btScalar(8.0);
-	m_airSpeed = btScalar(4.0);
+
+	m_walkMaxSpeed = btScalar(5.0);
+	m_runMaxSpeed = btScalar(5.0);
+	m_airMaxSpeed = btScalar(5.0);
+	m_flyMaxSpeed = btScalar(5.0);
+
+	m_walkAcceleration = btScalar(5.0);
+	m_runAcceleration = btScalar(5.0);
+	m_airAcceleration = btScalar(5.0);
+	m_flyAcceleration = btScalar(5.0);
+
 	m_friction = 0.1;
 	m_drag = 0.01;
 	m_currentSpeed = 0.0;
@@ -844,13 +853,21 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		// printf("m_localVelocity(%f,%f,%f)\n", m_localVelocity[0],m_localVelocity[1],m_localVelocity[2]);
 	}
 
-	btScalar speed = m_speedModifier * (m_wasOnGround ? m_groundSpeed : m_airSpeed);
+	btScalar accelerate = m_speedModifier * (m_onGround ? m_walkAcceleration : m_airAcceleration);
+	btScalar maxVelocity = m_speedModifier * (m_onGround ? m_walkMaxSpeed : m_airMaxSpeed);
+
+	btScalar projVel = m_localVelocity.dot(m_walkDirection);
+	btScalar accelVel = accelerate * dt;
+
+	if(projVel + accelVel > maxVelocity){
+		accelVel = btMax(maxVelocity - projVel, 0.0f);
+	}
 	
-	m_acceleration += m_walkDirection * speed * dt - m_gravity * m_up * dt;
+	m_acceleration += m_walkDirection * accelVel - m_gravity * m_up * dt;
 
 	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
 
-	if (m_onGround)
+	if (m_onGround && !m_wasJumping)
 	{
 		btVector3 groundFriction = -m_friction * m_localVelocity;
 		groundFriction.setY(0.0);
@@ -949,7 +966,7 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 
 	btVector3 startVec = m_currentPosition + m_externalVelocity * dt * 0.5;
 
-	if(m_wasJumping && m_localVelocity.y() > SIMD_EPSILON){
+	if(m_wasJumping && m_localVelocity.y() > SIMD_EPSILON && btFabs(m_externalVelocity.y()) > 0.0f){
 		// if(m_externalVelocity.y() < 0.0){
 		// 	m_externalVelocity.setY(0.0);
 		// }
@@ -1056,7 +1073,7 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 					//point.m_normalWorldOnB.dot(m_up) > 0.0
 
 					if(isDynamic && body){
-						btVector3 localPoint = pManifold->getBody0() == m_ghostObject ? point.m_localPointB : point.m_localPointA;
+						btVector3 localPoint = pManifold->getBody0() == m_ghostObject ? point.m_localPointA : point.m_localPointB;
 
 						btRigidBody* b = const_cast<btRigidBody*>(body);
 						b->applyForce(m_currentSpeed * m_walkDirection * point.m_normalWorldOnB * -100.0, localPoint);
@@ -1097,14 +1114,30 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 	}
 }
 
-void hbrKinematicCharacterController::setGroundSpeed(btScalar groundSpeed)
-{
-	m_groundSpeed = groundSpeed;
+void hbrKinematicCharacterController::setMaxWalkSpeed (btScalar speed) {
+	m_walkMaxSpeed = speed;
+}
+void hbrKinematicCharacterController::setMaxRunSpeed (btScalar speed) {
+	m_runMaxSpeed = speed;
+}
+void hbrKinematicCharacterController::setMaxAirSpeed (btScalar speed) {
+	m_airMaxSpeed = speed;
+}
+void hbrKinematicCharacterController::setMaxFlySpeed (btScalar speed) {
+	m_flyMaxSpeed = speed;
 }
 
-void hbrKinematicCharacterController::setAirSpeed(btScalar airSpeed)
-{
-	m_airSpeed = airSpeed;
+void hbrKinematicCharacterController::setWalkAcceleration (btScalar acceleration) {
+	m_walkAcceleration = acceleration;
+}
+void hbrKinematicCharacterController::setRunAcceleration (btScalar acceleration) {
+	m_runAcceleration = acceleration;
+}
+void hbrKinematicCharacterController::setAirAcceleration (btScalar acceleration) {
+	m_airAcceleration = acceleration;
+}
+void hbrKinematicCharacterController::setFlyAcceleration (btScalar acceleration) {
+	m_flyAcceleration = acceleration;
 }
 
 void hbrKinematicCharacterController::setFallSpeed(btScalar fallSpeed)
@@ -1142,7 +1175,7 @@ void hbrKinematicCharacterController::jump(const btVector3 &v)
 		m_localVelocity.setY(0.0);
 	}
 
-	m_localVelocity += m_jumpAxis * m_verticalVelocity;
+	m_localVelocity += m_jumpAxis * m_verticalVelocity * m_speedModifier;
 #if 0
 	currently no jumping.
 	btTransform xform;
