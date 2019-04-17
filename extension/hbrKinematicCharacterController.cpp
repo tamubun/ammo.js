@@ -852,6 +852,17 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 		// printf("m_localVelocity(%f,%f,%f)\n", m_localVelocity[0],m_localVelocity[1],m_localVelocity[2]);
 	}
+	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
+
+	if (m_wasOnGround && m_onGround)
+	{
+		btVector3 groundFriction = -m_friction * m_localVelocity;
+		groundFriction.setY(0.0);
+		m_localVelocity += groundFriction;
+	} else {
+		btVector3 dragFriction = -m_drag * m_localVelocity;
+		m_localVelocity += dragFriction;
+	}
 
 	btScalar accelerate = m_speedModifier * (m_onGround ? m_walkAcceleration : m_airAcceleration);
 	btScalar maxVelocity = m_speedModifier * (m_onGround ? m_walkMaxSpeed : m_airMaxSpeed);
@@ -864,18 +875,6 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	}
 	
 	m_acceleration += m_walkDirection * accelVel - m_gravity * m_up * dt;
-
-	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
-
-	if (m_onGround && !m_wasJumping)
-	{
-		btVector3 groundFriction = -m_friction * m_localVelocity;
-		groundFriction.setY(0.0);
-		m_localVelocity += groundFriction;
-	} else {
-		btVector3 dragFriction = -m_drag * m_localVelocity;
-		m_localVelocity += dragFriction;
-	}
 
 	m_localVelocity += m_acceleration;
 
