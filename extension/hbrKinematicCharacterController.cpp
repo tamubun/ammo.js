@@ -44,7 +44,7 @@ getNormalizedVector(const btVector3 &v)
 ///Support ducking
 class btKinematicClosestNotMeRayResultCallback : public btCollisionWorld::ClosestRayResultCallback
 {
-  public:
+public:
 	btKinematicClosestNotMeRayResultCallback(btCollisionObject *me) : btCollisionWorld::ClosestRayResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0))
 	{
 		m_me = me;
@@ -58,13 +58,13 @@ class btKinematicClosestNotMeRayResultCallback : public btCollisionWorld::Closes
 		return ClosestRayResultCallback::addSingleResult(rayResult, normalInWorldSpace);
 	}
 
-  protected:
+protected:
 	btCollisionObject *m_me;
 };
 
 class btKinematicClosestNotMeConvexResultCallback : public btCollisionWorld::ClosestConvexResultCallback
 {
-  public:
+public:
 	btKinematicClosestNotMeConvexResultCallback(btCollisionObject *me, const btVector3 &up, btScalar minSlopeDot)
 		: btCollisionWorld::ClosestConvexResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0)), m_me(me), m_up(up), m_minSlopeDot(minSlopeDot)
 	{
@@ -98,7 +98,7 @@ class btKinematicClosestNotMeConvexResultCallback : public btCollisionWorld::Clo
 		return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
 	}
 
-  protected:
+protected:
 	btCollisionObject *m_me;
 	const btVector3 m_up;
 	btScalar m_minSlopeDot;
@@ -106,7 +106,7 @@ class btKinematicClosestNotMeConvexResultCallback : public btCollisionWorld::Clo
 
 class btKinematicClosestNotMeConvexResultCallback2 : public btCollisionWorld::ClosestConvexResultCallback
 {
-  public:
+public:
 	btKinematicClosestNotMeConvexResultCallback2(btCollisionObject *me, const btVector3 &up, btScalar minSlopeDot)
 		: btCollisionWorld::ClosestConvexResultCallback(btVector3(0.0, 0.0, 0.0), btVector3(0.0, 0.0, 0.0)), m_me(me), m_up(up), m_minSlopeDot(minSlopeDot)
 	{
@@ -137,7 +137,7 @@ class btKinematicClosestNotMeConvexResultCallback2 : public btCollisionWorld::Cl
 		return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
 	}
 
-  protected:
+protected:
 	btCollisionObject *m_me;
 	const btVector3 m_up;
 	btScalar m_minSlopeDot;
@@ -331,7 +331,7 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 	/* FIXME: Handle penetration properly */
 	start.setOrigin(m_currentPosition);
 
-	m_targetPosition = m_currentPosition + m_up * (stepHeight);// + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
+	m_targetPosition = m_currentPosition + m_up * (stepHeight); // + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
 	// m_currentPosition = m_targetPosition;
 
 	end.setOrigin(m_targetPosition);
@@ -566,7 +566,6 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 
 	if (downVelocity > 0.0 && downVelocity > m_fallSpeed && (m_wasOnGround || !m_wasJumping))
 		downVelocity = m_fallSpeed;
-		
 
 	btVector3 step_drop = m_up * (m_currentStepOffset + downVelocity);
 	m_targetPosition -= step_drop;
@@ -843,14 +842,32 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	if (!m_onGround && m_externalVelocity.length2() > 0.0)
 	{
-		if(m_wasJumping && m_externalVelocity.y() < 0.0) {
+		if (m_wasJumping && m_externalVelocity.y() < 0.0)
+		{
 			m_externalVelocity.setY(0.0);
 		}
-		
-		m_localVelocity += m_externalVelocity;
-		m_externalVelocity.setZero();
 
-		// printf("m_localVelocity(%f,%f,%f)\n", m_localVelocity[0],m_localVelocity[1],m_localVelocity[2]);
+		btScalar maxVelocity = m_externalVelocity.length();
+
+		if(maxVelocity > 0.0){
+			btVector3 externalDir = m_externalVelocity;
+			externalDir.normalize();
+
+			btScalar projVel = m_localVelocity.dot(externalDir);
+			btScalar accelVel = btMax(maxVelocity - projVel, 0.0f);
+
+			// printf("ExternalVelocity(%f,%f,%f)\n", m_externalVelocity[0], m_externalVelocity[1], m_externalVelocity[2]);
+			// printf("ExternalVelocity2(%f,%f,%f)\n", externalDir[0] * accelVel, externalDir[1] * accelVel, externalDir[2] * accelVel);
+
+			m_localVelocity += externalDir * accelVel;
+			m_externalVelocity.setZero();
+
+			// printf("Velocity(%f,%f,%f)\n", m_localVelocity[0], m_localVelocity[1], m_localVelocity[2]);
+			// printf("projVel(%f)\n", projVel);
+			// printf("accelVel(%f)\n", accelVel);
+			// printf("maxVelocity(%f)\n", maxVelocity);
+		}
+		
 	}
 	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
 
@@ -859,7 +876,9 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		btVector3 groundFriction = -m_friction * m_localVelocity;
 		groundFriction.setY(0.0);
 		m_localVelocity += groundFriction;
-	} else {
+	}
+	else
+	{
 		btVector3 dragFriction = -m_drag * m_localVelocity;
 		m_localVelocity += dragFriction;
 	}
@@ -870,10 +889,11 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	btScalar projVel = m_localVelocity.dot(m_walkDirection);
 	btScalar accelVel = accelerate * dt;
 
-	if(projVel + accelVel > maxVelocity){
+	if (projVel + accelVel > maxVelocity)
+	{
 		accelVel = btMax(maxVelocity - projVel, 0.0f);
 	}
-	
+
 	m_acceleration += m_walkDirection * accelVel - m_gravity * m_up * dt;
 
 	m_localVelocity += m_acceleration;
@@ -887,7 +907,6 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	// {
 	// 	m_localVelocity.setY(-btFabs(m_fallSpeed));
 	// }
-
 
 	m_moveOffset = m_localVelocity * dt + m_externalVelocity * dt;
 
@@ -903,7 +922,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	m_jumpAxis.setValue(0.0, m_localVelocity.y() > SIMD_EPSILON && !m_isAirWalking, 0.0);
 
 	m_currentSpeed = m_localVelocity.length();
-	
+
 	//	printf("walkDirection(%f,%f,%f)\n", m_walkDirection[0],m_walkDirection[1],m_walkDirection[2]);
 	//	printf("walkSpeed=%f\n",walkSpeed);
 
@@ -916,9 +935,12 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	btVector3 deltaPosition = m_currentPosition - currentPosition;
 	m_localVelocity = deltaPosition / dt - m_externalVelocity;
 
-	if(!m_onGround && m_verticalVelocity < 0.0){
+	if (!m_onGround && m_verticalVelocity < 0.0)
+	{
 		m_localVelocity.setY(m_verticalVelocity);
-	}else {
+	}
+	else
+	{
 		m_verticalVelocity = m_localVelocity.y();
 	}
 
@@ -965,18 +987,18 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 
 	btVector3 startVec = m_currentPosition + m_externalVelocity * dt * 0.5;
 
-	if(m_wasJumping && m_localVelocity.y() > SIMD_EPSILON && btFabs(m_externalVelocity.y()) > 0.0f){
-		// if(m_externalVelocity.y() < 0.0){
-		// 	m_externalVelocity.setY(0.0);
-		// }
-		// printf("Jump=%f\n", m_externalVelocity.y());
-		return;
-	}
-
+	// if (m_wasJumping && m_localVelocity.y() > SIMD_EPSILON && btFabs(m_externalVelocity.y()) > 0.0f)
+	// {
+	// 	// if(m_externalVelocity.y() < 0.0){
+	// 	// 	m_externalVelocity.setY(0.0);
+	// 	// }
+	// 	// printf("Jump=%f\n", m_externalVelocity.y());
+	// 	return;
+	// }
 
 	//btMax(m_stepHeight, m_externalVelocity.y() * dt)
 
-	btScalar offset = btMin(btMax(m_stepHeight, m_externalVelocity.y() * dt), m_gravity * dt);
+	btScalar offset = m_stepHeight;//btMin(btMax(m_stepHeight, m_externalVelocity.y() * dt), m_gravity * dt);
 
 	start.setOrigin(startVec);
 	end.setOrigin(startVec - m_up * offset);
@@ -1015,7 +1037,7 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 		// 	m_externalVelocity = newVelocity;
 		// 	return;
 		// }
-		
+
 		m_externalVelocity = newVelocity;
 		m_onGround = true;
 	}
@@ -1071,19 +1093,18 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 
 					//point.m_normalWorldOnB.dot(m_up) > 0.0
 
-					if(isDynamic && body){
+					if (isDynamic && body)
+					{
 						btVector3 localPoint = pManifold->getBody0() == m_ghostObject ? point.m_localPointA : point.m_localPointB;
 
-						btRigidBody* b = const_cast<btRigidBody*>(body);
+						btRigidBody *b = const_cast<btRigidBody *>(body);
 						b->applyForce(m_currentSpeed * m_walkDirection * point.m_normalWorldOnB * -100.0, localPoint);
 
 						// btVector3 velocityInPoint = b->getVelocityInLocalPoint(localPoint);
 
 						// // m_acceleration += velocityInPoint / 60.0;
 
-
 						// m_localVelocity += velocityInPoint / 2.0;
-						
 					}
 
 					if (m_currentPosition.getY() - ptB.getY() > 0.9 - m_stepHeight)
@@ -1113,29 +1134,37 @@ void hbrKinematicCharacterController::testCollisions(btCollisionWorld *collision
 	}
 }
 
-void hbrKinematicCharacterController::setMaxWalkSpeed (btScalar speed) {
+void hbrKinematicCharacterController::setMaxWalkSpeed(btScalar speed)
+{
 	m_walkMaxSpeed = speed;
 }
-void hbrKinematicCharacterController::setMaxRunSpeed (btScalar speed) {
+void hbrKinematicCharacterController::setMaxRunSpeed(btScalar speed)
+{
 	m_runMaxSpeed = speed;
 }
-void hbrKinematicCharacterController::setMaxAirSpeed (btScalar speed) {
+void hbrKinematicCharacterController::setMaxAirSpeed(btScalar speed)
+{
 	m_airMaxSpeed = speed;
 }
-void hbrKinematicCharacterController::setMaxFlySpeed (btScalar speed) {
+void hbrKinematicCharacterController::setMaxFlySpeed(btScalar speed)
+{
 	m_flyMaxSpeed = speed;
 }
 
-void hbrKinematicCharacterController::setWalkAcceleration (btScalar acceleration) {
+void hbrKinematicCharacterController::setWalkAcceleration(btScalar acceleration)
+{
 	m_walkAcceleration = acceleration;
 }
-void hbrKinematicCharacterController::setRunAcceleration (btScalar acceleration) {
+void hbrKinematicCharacterController::setRunAcceleration(btScalar acceleration)
+{
 	m_runAcceleration = acceleration;
 }
-void hbrKinematicCharacterController::setAirAcceleration (btScalar acceleration) {
+void hbrKinematicCharacterController::setAirAcceleration(btScalar acceleration)
+{
 	m_airAcceleration = acceleration;
 }
-void hbrKinematicCharacterController::setFlyAcceleration (btScalar acceleration) {
+void hbrKinematicCharacterController::setFlyAcceleration(btScalar acceleration)
+{
 	m_flyAcceleration = acceleration;
 }
 
@@ -1170,11 +1199,14 @@ void hbrKinematicCharacterController::jump(const btVector3 &v)
 
 	m_jumpPosition = m_ghostObject->getWorldTransform().getOrigin();
 
-	if(m_localVelocity.y() < 0.0){
+	if (m_localVelocity.y() < 0.0)
+	{
 		m_localVelocity.setY(0.0);
 	}
 
-	m_localVelocity += m_jumpAxis * m_verticalVelocity * m_speedModifier;
+	m_externalVelocity.setY(btMax(0.0f, m_externalVelocity.y()));
+
+	m_localVelocity += m_jumpAxis * m_verticalVelocity * m_speedModifier + m_externalVelocity;
 #if 0
 	currently no jumping.
 	btTransform xform;
