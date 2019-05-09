@@ -137,6 +137,9 @@ export class btCollisionObject {
 	getInterpolationWorldTransform(): btTransform;
 	getInterpolationLinearVelocity(): btVector3;
 	getInterpolationAngularVelocity(): btVector3;
+	setInterpolationWorldTransform(worldTrans: btTransform): void;
+	setInterpolationLinearVelocity(velocity: btVector3): void;
+	setInterpolationAngularVelocity(velocity: btVector3): void;
 	getCollisionFlags(): number;
 	setCollisionFlags(flags: number): void;
 	setWorldTransform(worldTrans: btTransform): void;

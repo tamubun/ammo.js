@@ -142,6 +142,10 @@ interface btCollisionObject {
   [Ref] btTransform getInterpolationWorldTransform();
   [Ref, Const] btVector3 getInterpolationLinearVelocity();
   [Ref, Const] btVector3 getInterpolationAngularVelocity();
+  void setInterpolationWorldTransform([Const,Ref] btTransform worldTrans);
+  void setInterpolationLinearVelocity([Const,Ref] btVector3 velocity);
+  void setInterpolationAngularVelocity([Const,Ref] btVector3 velocity);
+
   long getCollisionFlags();
   void setCollisionFlags(long flags);
   void setWorldTransform([Const,Ref] btTransform worldTrans);
