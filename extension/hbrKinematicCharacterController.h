@@ -41,6 +41,9 @@ protected:
 	btPairCachingGhostObject *m_ghostObject;
 	btConvexShape *m_convexShape; //is also in m_ghostObject, but it needs to be convex, so we store it here to avoid upcast
 
+	const btCollisionObject *m_standingCollisionObject;
+	btVector3 m_standingPoint;
+
 	btScalar m_maxPenetrationDepth;
 	btScalar m_verticalVelocity;
 	btScalar m_verticalOffset;

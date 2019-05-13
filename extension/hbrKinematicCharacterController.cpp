@@ -117,6 +117,9 @@ public:
 		if (convexResult.m_hitCollisionObject == m_me)
 			return btScalar(1.0);
 
+		if (!convexResult.m_hitCollisionObject->hasContactResponse())
+			return btScalar(1.0);
+
 		btVector3 hitNormalWorld;
 		if (normalInWorldSpace)
 		{
@@ -126,12 +129,6 @@ public:
 		{
 			///need to transform normal into worldspace
 			hitNormalWorld = convexResult.m_hitCollisionObject->getWorldTransform().getBasis() * convexResult.m_hitNormalLocal;
-		}
-
-		btScalar dotUp = m_up.dot(hitNormalWorld);
-		if (dotUp < m_minSlopeDot)
-		{
-			return btScalar(1.0);
 		}
 
 		return ClosestConvexResultCallback::addSingleResult(convexResult, normalInWorldSpace);
@@ -172,6 +169,8 @@ btVector3 hbrKinematicCharacterController::perpindicularComponent(const btVector
 
 hbrKinematicCharacterController::hbrKinematicCharacterController(btPairCachingGhostObject *ghostObject, btConvexShape *convexShape, btScalar stepHeight, const btVector3 &up)
 {
+	m_standingCollisionObject = NULL;
+	m_standingPoint.setValue(0.0f, 1.0f, 0.0f);
 	m_ghostObject = ghostObject;
 	m_up.setValue(0.0f, 0.0f, 1.0f);
 	m_jumpAxis.setValue(0.0f, 0.0f, 1.0f);
@@ -319,7 +318,7 @@ bool hbrKinematicCharacterController::recoverFromPenetration(btCollisionWorld *c
 void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 {
 	btScalar stepHeight = 0.0f;
-	if (m_verticalVelocity < 0.0)
+	if (m_verticalVelocity < 0.0f)
 		stepHeight = m_stepHeight;
 
 	// phase 1: up
@@ -331,8 +330,7 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 	/* FIXME: Handle penetration properly */
 	start.setOrigin(m_currentPosition);
 
-	m_targetPosition = m_currentPosition + m_up * (stepHeight); // + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
-	// m_currentPosition = m_targetPosition;
+	m_targetPosition = m_currentPosition + m_up * stepHeight; // + m_jumpAxis * ((m_verticalOffset > 0.f ? m_verticalOffset : 0.f));
 
 	end.setOrigin(m_targetPosition);
 
@@ -354,19 +352,10 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 
 	if (callback.hasHit() && m_ghostObject->hasContactResponse() && needsCollision(m_ghostObject, callback.m_hitCollisionObject))
 	{
-		// printf("Step_m_hitNormalWorld=%f,%f,%f\n",callback.m_hitNormalWorld[0],callback.m_hitNormalWorld[1],callback.m_hitNormalWorld[2]);
-
 		// Only modify the position if the hit was a slope and not a wall or ceiling.
-		if (callback.m_hitNormalWorld.dot(m_up) > 0.0)
-		{
-
-			// we moved up only a fraction of the step height
-			m_currentStepOffset = stepHeight * callback.m_closestHitFraction;
-			if (m_interpolateUp == true)
-				m_currentPosition.setInterpolate3(m_currentPosition, m_targetPosition, callback.m_closestHitFraction);
-			else
-				m_currentPosition = m_targetPosition;
-		}
+		// we moved up only a fraction of the step height
+		m_currentStepOffset = stepHeight * callback.m_closestHitFraction;
+		m_currentPosition.setInterpolate3(m_currentPosition, m_targetPosition, callback.m_closestHitFraction);
 
 		btTransform &xform = m_ghostObject->getWorldTransform();
 		xform.setOrigin(m_currentPosition);
@@ -392,8 +381,7 @@ void hbrKinematicCharacterController::stepUp(btCollisionWorld *world)
 		{
 			m_verticalOffset = 0.0;
 			m_verticalVelocity = 0.0;
-			m_localVelocity.setY(0.0);
-			m_currentStepOffset = m_stepHeight;
+			// m_currentStepOffset = m_stepHeight;
 		}
 	}
 	else
@@ -509,7 +497,7 @@ void hbrKinematicCharacterController::stepForwardAndStrafe(btCollisionWorld *col
 			//			m_currentPosition.setInterpolate3 (m_currentPosition, m_targetPosition, callback.m_closestHitFraction);
 
 			// printf("HasHit(%s)\n", callback.hasHit() ? "true" : "false");
-			// printf("m_hitNormalWorld(%f,%f,%f)\n", callback.m_hitNormalWorld[0],callback.m_hitNormalWorld[1],callback.m_hitNormalWorld[2]);
+			// printf("m_hitNormalWorld(%f,%f,%f)\n", callback.m_hitNormalWorld[0], callback.m_hitNormalWorld[1], callback.m_hitNormalWorld[2]);
 			// printf("Dot(%f)\n", callback.m_hitNormalWorld.dot(m_up));
 
 			updateTargetPositionBasedOnCollision(callback.m_hitNormalWorld);
@@ -547,6 +535,12 @@ void hbrKinematicCharacterController::stepForwardAndStrafe(btCollisionWorld *col
 
 void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld, btScalar dt)
 {
+	// btTransform start, end, end_double;
+	// btVector3 orig_position = m_targetPosition;
+	// btScalar downVelocity = (m_verticalVelocity < 0.f ? -m_verticalVelocity : 0.f) * dt;
+
+	// printf("m_currentStepOffset: %f\n", m_currentStepOffset);
+
 	btTransform start, end, end_double;
 	bool runonce = false;
 
@@ -562,15 +556,38 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 	btScalar downVelocity = (m_verticalVelocity < 0.f ? -m_verticalVelocity : 0.f) * dt;
 
 	if (m_verticalVelocity > 0.0)
+	{
+		btKinematicClosestNotMeConvexResultCallback callback(m_ghostObject, m_up, m_maxSlopeCosine);
+		callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
+		callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
+
+		btVector3 step_drop = m_up * dt;
+		m_targetPosition -= step_drop;
+
+		start.setIdentity();
+		end.setIdentity();
+
+		start.setOrigin(m_currentPosition);
+		end.setOrigin(m_targetPosition);
+
+		m_ghostObject->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
+
+		if (callback.hasHit() && m_ghostObject->hasContactResponse())
+		{
+			// printf("m_hitNormalWorld(%f,%f,%f)\n", callback.m_hitNormalWorld[0], callback.m_hitNormalWorld[1], callback.m_hitNormalWorld[2]);
+
+			m_wasJumping = false;
+			m_onGround = true;
+		}
+
 		return;
+	}
 
 	if (downVelocity > 0.0 && downVelocity > m_fallSpeed && (m_wasOnGround || !m_wasJumping))
 		downVelocity = m_fallSpeed;
 
 	btVector3 step_drop = m_up * (m_currentStepOffset + downVelocity);
 	m_targetPosition -= step_drop;
-
-	// printf("step_drop(%f,%f,%f)\n", step_drop[0],step_drop[1],step_drop[2]);
 
 	btKinematicClosestNotMeConvexResultCallback callback(m_ghostObject, m_up, m_maxSlopeCosine);
 	callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
@@ -649,7 +666,7 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 		// we dropped a fraction of the height -> hit floor
 		btScalar fraction = (m_currentPosition.getY() - callback.m_hitPointWorld.getY()) / 2;
 
-		// printf("hitpoint: %g - pos %g\n", callback.m_hitPointWorld.getY(), m_currentPosition.getY());
+		//printf("hitpoint: %g - pos %g\n", callback.m_hitPointWorld.getY(), m_currentPosition.getY());
 
 		if (bounce_fix == true)
 		{
@@ -668,6 +685,8 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 		m_verticalOffset = 0.0;
 		m_wasJumping = false;
 		m_onGround = true;
+		m_standingCollisionObject = callback.m_hitCollisionObject;
+		m_standingPoint = callback.m_hitPointWorld;
 	}
 	else
 	{
@@ -801,16 +820,16 @@ void hbrKinematicCharacterController::applyExternalVelocity()
 		btScalar projVel = m_localVelocity.dot(externalDir);
 		btScalar accelVel = btMax(maxVelocity - projVel, 0.0f);
 
-		printf("ExternalVelocity(%f,%f,%f)\n", m_externalVelocity[0], m_externalVelocity[1], m_externalVelocity[2]);
-		printf("ExternalVelocity2(%f,%f,%f)\n", externalDir[0] * accelVel, externalDir[1] * accelVel, externalDir[2] * accelVel);
+		// printf("ExternalVelocity(%f,%f,%f)\n", m_externalVelocity[0], m_externalVelocity[1], m_externalVelocity[2]);
+		// printf("ExternalVelocity2(%f,%f,%f)\n", externalDir[0] * accelVel, externalDir[1] * accelVel, externalDir[2] * accelVel);
 
-		m_localVelocity += externalDir * accelVel;
+		m_localVelocity += m_externalVelocity; //externalDir * accelVel;
 		m_externalVelocity.setZero();
 
-		printf("Velocity(%f,%f,%f)\n", m_localVelocity[0], m_localVelocity[1], m_localVelocity[2]);
-		printf("projVel(%f)\n", projVel);
-		printf("accelVel(%f)\n", accelVel);
-		printf("maxVelocity(%f)\n", maxVelocity);
+		// printf("Velocity(%f,%f,%f)\n", m_localVelocity[0], m_localVelocity[1], m_localVelocity[2]);
+		// printf("projVel(%f)\n", projVel);
+		// printf("accelVel(%f)\n", accelVel);
+		// printf("maxVelocity(%f)\n", maxVelocity);
 	}
 }
 
@@ -864,7 +883,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	inheritVelocity(collisionWorld, dt);
 
-	if (!m_onGround && m_externalVelocity.length2() > 0.0)
+	if (!m_wasOnGround && m_externalVelocity.length2() > 0.0)
 	{
 		if (m_wasJumping && m_externalVelocity.y() < 0.0)
 		{
@@ -879,9 +898,9 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		m_externalVelocity.setZero();
 	}
 
-	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
+	// m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
 
-	if (m_wasOnGround && m_onGround)
+	if (m_wasOnGround && !m_wasJumping)
 	{
 		btVector3 groundFriction = -m_friction * m_localVelocity;
 		groundFriction.setY(0.0);
@@ -893,8 +912,8 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		m_localVelocity += dragFriction;
 	}
 
-	btScalar accelerate = m_speedModifier * (m_onGround ? m_walkAcceleration : m_airAcceleration);
-	btScalar maxVelocity = m_speedModifier * (m_onGround ? m_walkMaxSpeed : m_airMaxSpeed);
+	btScalar accelerate = m_speedModifier * (m_wasOnGround ? m_walkAcceleration : m_airAcceleration);
+	btScalar maxVelocity = m_speedModifier * (m_wasOnGround ? m_walkMaxSpeed : m_airMaxSpeed);
 
 	btScalar projVel = m_localVelocity.dot(m_walkDirection);
 	btScalar accelVel = accelerate * dt;
@@ -929,7 +948,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	btTransform xform;
 	xform = m_ghostObject->getWorldTransform();
 
-	m_jumpAxis.setValue(0.0, m_localVelocity.y() > SIMD_EPSILON && !m_isAirWalking, 0.0);
+	m_jumpAxis.setValue(0.0, !m_isAirWalking, 0.0);
 
 	m_currentSpeed = m_localVelocity.length();
 
@@ -940,23 +959,18 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	btVector3 currentPosition = m_currentPosition;
 
-	stepForwardAndStrafe(collisionWorld, m_moveOffset);
+	btVector3 moveOffset = btVector3(m_moveOffset.x(), m_moveOffset.y(), m_moveOffset.z());
+	stepForwardAndStrafe(collisionWorld, moveOffset);
 
 	btVector3 deltaPosition = m_currentPosition - currentPosition;
 	m_localVelocity = deltaPosition / dt - m_externalVelocity;
 
-	if (!m_onGround && m_verticalVelocity < 0.0)
-	{
-		m_localVelocity.setY(m_verticalVelocity);
-	}
-	else
-	{
-		m_verticalVelocity = m_localVelocity.y();
-	}
+	// m_localVelocity.setX(deltaPosition.x() / dt - m_externalVelocity.x());
+	// m_localVelocity.setZ(deltaPosition.z() / dt - m_externalVelocity.z());
 
 	stepDown(collisionWorld, dt);
 
-	if (m_onGround && m_localVelocity.y() < 0.0)
+	if (m_onGround && m_localVelocity.y() < 0.0f)
 	{
 		m_localVelocity.setY(0.0);
 	}
@@ -984,18 +998,18 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		}
 	}
 
-	testCollisions(collisionWorld);
+	// testCollisions(collisionWorld);
 }
 
 void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisionWorld, btScalar dt)
 {
-	btTransform start, end;
+	// btTransform start, end;
 
-	btKinematicClosestNotMeConvexResultCallback callback(m_ghostObject, m_up, m_maxSlopeCosine);
-	callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
-	callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
+	// btKinematicClosestNotMeConvexResultCallback callback(m_ghostObject, m_up, m_maxSlopeCosine);
+	// callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
+	// callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
 
-	btVector3 startVec = m_currentPosition + m_externalVelocity * dt * 0.5;
+	// btVector3 startVec = m_currentPosition + m_externalVelocity * dt * 0.5;
 
 	// if (m_wasJumping && m_localVelocity.y() > SIMD_EPSILON && btFabs(m_externalVelocity.y()) > 0.0f)
 	// {
@@ -1008,33 +1022,35 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 
 	//btMax(m_stepHeight, m_externalVelocity.y() * dt)
 
-	btScalar offset = m_stepHeight; //btMin(btMax(m_stepHeight, m_externalVelocity.y() * dt), m_gravity * dt);
+	// btScalar offset = m_stepHeight; //btMin(btMax(m_stepHeight, m_externalVelocity.y() * dt), m_gravity * dt);
 
-	start.setOrigin(startVec);
-	end.setOrigin(startVec - m_up * offset);
+	// start.setOrigin(startVec);
+	// end.setOrigin(startVec - m_up * offset);
 
-	start.setRotation(m_currentOrientation);
-	end.setRotation(m_currentOrientation);
+	// start.setRotation(m_currentOrientation);
+	// end.setRotation(m_currentOrientation);
 
-	btVector3 asd = m_externalVelocity * dt * 0.5;
+	// btVector3 asd = m_externalVelocity * dt * 0.5;
 
-	collisionWorld->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
+	// collisionWorld->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
 
 	// printf("m_closestHitFraction(%f)\n", callback.m_closestHitFraction);
 	// if(!callback.hasHit()){
 	// 	printf("HasNotHit(%f, %f, %f)\n", asd[0], asd[1], asd[2]);
 	// }
 
-	if (callback.hasHit() && callback.m_hitNormalWorld.dot(m_up) > 0.0)
+	if (m_standingCollisionObject)
 	{
 		// if(callback.m_closestHitFraction > SIMD_EPSILON){
 		// 	return;
 		// }
-		btTransform transform = callback.m_hitCollisionObject->getWorldTransform();
-		btVector3 linearVel = callback.m_hitCollisionObject->getInterpolationLinearVelocity();
-		btVector3 angularVelocity = callback.m_hitCollisionObject->getInterpolationAngularVelocity();
+		btVector3 worldPos = m_standingPoint + m_externalVelocity * dt * 0.5;
 
-		btVector3 localPosition = callback.m_hitPointWorld - transform.getOrigin();
+		btTransform transform = m_standingCollisionObject->getInterpolationWorldTransform();
+		btVector3 linearVel = m_standingCollisionObject->getInterpolationLinearVelocity();
+		btVector3 angularVelocity = m_standingCollisionObject->getInterpolationAngularVelocity();
+
+		btVector3 localPosition = worldPos - transform.getOrigin();
 
 		btVector3 newVelocity = angularVelocity.cross(localPosition) + linearVel;
 
@@ -1044,12 +1060,16 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 
 		// if(newVelocity.y() - m_externalVelocity.y() > m_gravity * dt) {
 		// 	newVelocity.setY(m_externalVelocity.y());
-		// 	m_externalVelocity = newVelocity;
-		// 	return;
 		// }
 
+		if (newVelocity.y() - m_externalVelocity.y() > m_fallSpeed)
+		{
+			newVelocity.setY(m_externalVelocity.y());
+		}
+
 		m_externalVelocity = newVelocity;
-		m_onGround = true;
+
+		m_standingCollisionObject = NULL;
 	}
 }
 
