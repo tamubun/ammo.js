@@ -38,8 +38,8 @@ hbrKinematicCharacterController : public btCharacterControllerInterface
 protected:
 	btScalar m_halfHeight;
 
-	btPairCachingGhostObject* m_ghostObject;
-	btConvexShape* m_convexShape;  //is also in m_ghostObject, but it needs to be convex, so we store it here to avoid upcast
+	btPairCachingGhostObject *m_ghostObject;
+	btConvexShape *m_convexShape; //is also in m_ghostObject, but it needs to be convex, so we store it here to avoid upcast
 
 	btScalar m_maxPenetrationDepth;
 	btScalar m_verticalVelocity;
@@ -48,15 +48,15 @@ protected:
 	btScalar m_jumpSpeed;
 	btScalar m_SetjumpSpeed;
 	btScalar m_maxJumpHeight;
-	btScalar m_maxSlopeRadians;  // Slope angle that is set (used for returning the exact value)
-	btScalar m_maxSlopeCosine;   // Cosine equivalent of m_maxSlopeRadians (calculated once when set, for optimization)
+	btScalar m_maxSlopeRadians; // Slope angle that is set (used for returning the exact value)
+	btScalar m_maxSlopeCosine;  // Cosine equivalent of m_maxSlopeRadians (calculated once when set, for optimization)
 	btScalar m_gravity;
 
 	btScalar m_turnAngle;
 
 	btScalar m_stepHeight;
 
-	btScalar m_addedMargin;  //@todo: remove this and fix the code
+	btScalar m_addedMargin; //@todo: remove this and fix the code
 
 	///this is the desired walk direction, set by the user
 	btVector3 m_walkDirection;
@@ -114,31 +114,31 @@ protected:
 	btVector3 m_up;
 	btVector3 m_jumpAxis;
 
-	static btVector3* getUpAxisDirections();
+	static btVector3 *getUpAxisDirections();
 	bool m_interpolateUp;
 	bool full_drop;
 	bool bounce_fix;
 
-	btVector3 computeReflectionDirection(const btVector3& direction, const btVector3& normal);
-	btVector3 parallelComponent(const btVector3& direction, const btVector3& normal);
-	btVector3 perpindicularComponent(const btVector3& direction, const btVector3& normal);
+	btVector3 computeReflectionDirection(const btVector3 &direction, const btVector3 &normal);
+	btVector3 parallelComponent(const btVector3 &direction, const btVector3 &normal);
+	btVector3 perpindicularComponent(const btVector3 &direction, const btVector3 &normal);
 
 	bool recoverFromPenetration(btCollisionWorld * collisionWorld);
 	void stepUp(btCollisionWorld * collisionWorld);
-	void updateTargetPositionBasedOnCollision(const btVector3& hit_normal, btScalar tangentMag = btScalar(0.0), btScalar normalMag = btScalar(1.0));
-	void stepForwardAndStrafe(btCollisionWorld * collisionWorld, const btVector3& walkMove);
+	void updateTargetPositionBasedOnCollision(const btVector3 &hit_normal, btScalar tangentMag = btScalar(0.0), btScalar normalMag = btScalar(1.0));
+	void stepForwardAndStrafe(btCollisionWorld * collisionWorld, const btVector3 &walkMove);
 	void stepDown(btCollisionWorld * collisionWorld, btScalar dt);
 
-	virtual bool needsCollision(const btCollisionObject* body0, const btCollisionObject* body1);
+	virtual bool needsCollision(const btCollisionObject *body0, const btCollisionObject *body1);
 
-	void setUpVector(const btVector3& up);
+	void setUpVector(const btVector3 &up);
 
 	btQuaternion getRotation(btVector3 & v0, btVector3 & v1) const;
 
 public:
 	BT_DECLARE_ALIGNED_ALLOCATOR();
 
-	hbrKinematicCharacterController(btPairCachingGhostObject * ghostObject, btConvexShape * convexShape, btScalar stepHeight, const btVector3& up = btVector3(1.0, 0.0, 0.0));
+	hbrKinematicCharacterController(btPairCachingGhostObject * ghostObject, btConvexShape * convexShape, btScalar stepHeight, const btVector3 &up = btVector3(1.0, 0.0, 0.0));
 	~hbrKinematicCharacterController();
 
 	///btActionInterface interface
@@ -153,29 +153,29 @@ public:
 	///btActionInterface interface
 	void debugDraw(btIDebugDraw * debugDrawer);
 
-	void setUp(const btVector3& up);
+	void setUp(const btVector3 &up);
 
-	const btVector3& getUp() { return m_up; }
+	const btVector3 &getUp() { return m_up; }
 
 	/// This should probably be called setPositionIncrementPerSimulatorStep.
 	/// This is neither a direction nor a velocity, but the amount to
 	///	increment the position each simulation iteration, regardless
 	///	of dt.
 	/// This call will reset any velocity set by setVelocityForTimeInterval().
-	virtual void setWalkDirection(const btVector3& walkDirection);
+	virtual void setWalkDirection(const btVector3 &walkDirection);
 
 	/// Caller provides a velocity with which the character should move for
 	///	the given time period.  After the time period, velocity is reset
 	///	to zero.
 	/// This call will reset any walk direction set by setWalkDirection().
 	/// Negative time intervals will result in no motion.
-	virtual void setVelocityForTimeInterval(const btVector3& velocity,
+	virtual void setVelocityForTimeInterval(const btVector3 &velocity,
 											btScalar timeInterval);
 
-	virtual void setAngularVelocity(const btVector3& velocity);
-	virtual const btVector3& getAngularVelocity() const;
+	virtual void setAngularVelocity(const btVector3 &velocity);
+	virtual const btVector3 &getAngularVelocity() const;
 
-	virtual void setLinearVelocity(const btVector3& velocity);
+	virtual void setLinearVelocity(const btVector3 &velocity);
 	virtual btVector3 getLocalLinearVelocity() const;
 	virtual btVector3 getLinearVelocity() const;
 
@@ -185,27 +185,29 @@ public:
 	btScalar getAngularDamping() const { return m_angularDamping; }
 
 	void reset(btCollisionWorld * collisionWorld);
-	void warp(const btVector3& origin);
+	void warp(const btVector3 &origin);
 
 	void preStep(btCollisionWorld * collisionWorld);
 	void playerStep(btCollisionWorld * collisionWorld, btScalar dt);
 
-	void setMaxWalkSpeed (btScalar speed);
-	void setMaxRunSpeed (btScalar speed);
-	void setMaxAirSpeed (btScalar speed);
-	void setMaxFlySpeed (btScalar speed);
+	void setMaxWalkSpeed(btScalar speed);
+	void setMaxRunSpeed(btScalar speed);
+	void setMaxAirSpeed(btScalar speed);
+	void setMaxFlySpeed(btScalar speed);
 
-	void setWalkAcceleration (btScalar acceleration);
-	void setRunAcceleration (btScalar acceleration);
-	void setAirAcceleration (btScalar acceleration);
-	void setFlyAcceleration (btScalar acceleration);
+	void setWalkAcceleration(btScalar acceleration);
+	void setRunAcceleration(btScalar acceleration);
+	void setAirAcceleration(btScalar acceleration);
+	void setFlyAcceleration(btScalar acceleration);
 
-	void inheritVelocity(btCollisionWorld* collisionWorld, btScalar dt);
-	void testCollisions(btCollisionWorld* collisionWorld);
+	void inheritVelocity(btCollisionWorld * collisionWorld, btScalar dt);
+	void testCollisions(btCollisionWorld * collisionWorld);
 	void setAirWalking(bool enabled) { m_isAirWalking = enabled; };
 	void setSpeedModifier(btScalar speed) { m_speedModifier = speed; };
 	void setFriction(btScalar friction) { m_friction = friction; };
 	void setDrag(btScalar friction) { m_drag = friction; };
+
+	void applyExternalVelocity();
 
 	void setStepHeight(btScalar h);
 	btScalar getStepHeight() const { return m_stepHeight; }
@@ -216,13 +218,13 @@ public:
 	void setMaxJumpHeight(btScalar maxJumpHeight);
 	bool canJump() const;
 
-	void jump(const btVector3& v = btVector3(0, 0, 0));
+	void jump(const btVector3 &v = btVector3(0, 0, 0));
 
-	void applyImpulse(const btVector3& v) { jump(v); }
-	void applyCentralImpulse(const btVector3& v) { m_velocity += v; }
-	void applyCentralForce(const btVector3& v) { m_acceleration += v; }
+	void applyImpulse(const btVector3 &v) { jump(v); }
+	void applyCentralImpulse(const btVector3 &v) { m_velocity += v; }
+	void applyCentralForce(const btVector3 &v) { m_acceleration += v; }
 
-	void setGravity(const btVector3& gravity);
+	void setGravity(const btVector3 &gravity);
 	btVector3 getGravity() const;
 
 	/// The max slope determines the maximum angle that the controller can walk up.
@@ -233,7 +235,7 @@ public:
 	void setMaxPenetrationDepth(btScalar d);
 	btScalar getMaxPenetrationDepth() const;
 
-	btPairCachingGhostObject* getGhostObject();
+	btPairCachingGhostObject *getGhostObject();
 	void setUseGhostSweepTest(bool useGhostObjectSweepTest)
 	{
 		m_useGhostObjectSweepTest = useGhostObjectSweepTest;
@@ -243,4 +245,4 @@ public:
 	void setUpInterpolate(bool value);
 };
 
-#endif  // HBR_KINEMATIC_CHARACTER_CONTROLLER_H
+#endif // HBR_KINEMATIC_CHARACTER_CONTROLLER_H
