@@ -904,11 +904,15 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
 
+	// btScalar friction = (m_wasOnGround ? m_friction : m_drag);
+	// btScalar frictionMagnitude = 0.0;
+
 	if (m_wasOnGround)
 	{
 		btVector3 groundFriction = -m_friction * m_localVelocity;
 		groundFriction.setY(0.0);
 		m_localVelocity += groundFriction;
+		// frictionMagnitude = groundFriction.length();
 		// printf("AddFriction=%f\n", groundFriction.length());
 	}
 	else
