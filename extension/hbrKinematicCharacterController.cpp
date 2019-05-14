@@ -169,6 +169,8 @@ btVector3 hbrKinematicCharacterController::perpindicularComponent(const btVector
 
 hbrKinematicCharacterController::hbrKinematicCharacterController(btPairCachingGhostObject *ghostObject, btConvexShape *convexShape, btScalar stepHeight, const btVector3 &up)
 {
+	m_timeSinceGrounded = 0.0f;
+	m_jumpOffset = 0.1;
 	m_standingCollisionObject = NULL;
 	m_standingPoint.setValue(0.0f, 1.0f, 0.0f);
 	m_ghostObject = ghostObject;
@@ -551,6 +553,8 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 	btVector3 gravity_drop = m_up * downVelocity; 
 	m_targetPosition -= (step_drop + gravity_drop);*/
 
+	m_targetPosition = m_currentPosition;
+
 	btVector3 orig_position = m_targetPosition;
 
 	btScalar downVelocity = (m_verticalVelocity < 0.f ? -m_verticalVelocity : 0.f) * dt;
@@ -613,7 +617,7 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 		//set double test for 2x the step drop, to check for a large drop vs small drop
 		end_double.setOrigin(m_targetPosition - step_drop);
 
-		if (m_useGhostObjectSweepTest)
+		if (1== 0 && m_useGhostObjectSweepTest)
 		{
 			m_ghostObject->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
 
@@ -705,7 +709,7 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 				m_targetPosition -= step_drop;
 			}
 		}
-		//printf("full drop - %g, %g\n", m_currentPosition.getY(), m_targetPosition.getY());
+		// printf("full drop - %g, %g\n", m_currentPosition.getY(), m_targetPosition.getY());
 
 		m_currentPosition = m_targetPosition;
 	}
@@ -898,13 +902,14 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		m_externalVelocity.setZero();
 	}
 
-	// m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
+	m_localVelocity *= btPow(btScalar(1) - m_linearDamping, dt);
 
-	if (m_wasOnGround && !m_wasJumping)
+	if (m_wasOnGround)
 	{
 		btVector3 groundFriction = -m_friction * m_localVelocity;
 		groundFriction.setY(0.0);
 		m_localVelocity += groundFriction;
+		// printf("AddFriction=%f\n", groundFriction.length());
 	}
 	else
 	{
@@ -924,6 +929,11 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	}
 
 	m_acceleration += m_walkDirection * accelVel - m_gravity * m_up * dt;
+
+	if (m_localVelocity[1] < 0.0 && btFabs(m_localVelocity[1]) > btFabs(m_fallSpeed))
+	{
+		m_acceleration.setY(0.0f);
+	}
 
 	m_localVelocity += m_acceleration;
 
@@ -965,6 +975,10 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	btVector3 deltaPosition = m_currentPosition - currentPosition;
 	m_localVelocity = deltaPosition / dt - m_externalVelocity;
 
+	// m_verticalVelocity = m_localVelocity[1];
+
+	// printf("m_localVelocity(%f)\n", m_localVelocity[0]);
+
 	// m_localVelocity.setX(deltaPosition.x() / dt - m_externalVelocity.x());
 	// m_localVelocity.setZ(deltaPosition.z() / dt - m_externalVelocity.z());
 
@@ -973,6 +987,15 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	if (m_onGround && m_localVelocity.y() < 0.0f)
 	{
 		m_localVelocity.setY(0.0);
+	}
+
+	if (!m_onGround)
+	{
+		m_timeSinceGrounded += dt;
+	}
+	else
+	{
+		m_timeSinceGrounded = 0.0f;
 	}
 
 	m_acceleration.setZero();
@@ -1003,47 +1026,8 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisionWorld, btScalar dt)
 {
-	// btTransform start, end;
-
-	// btKinematicClosestNotMeConvexResultCallback callback(m_ghostObject, m_up, m_maxSlopeCosine);
-	// callback.m_collisionFilterGroup = getGhostObject()->getBroadphaseHandle()->m_collisionFilterGroup;
-	// callback.m_collisionFilterMask = getGhostObject()->getBroadphaseHandle()->m_collisionFilterMask;
-
-	// btVector3 startVec = m_currentPosition + m_externalVelocity * dt * 0.5;
-
-	// if (m_wasJumping && m_localVelocity.y() > SIMD_EPSILON && btFabs(m_externalVelocity.y()) > 0.0f)
-	// {
-	// 	// if(m_externalVelocity.y() < 0.0){
-	// 	// 	m_externalVelocity.setY(0.0);
-	// 	// }
-	// 	// printf("Jump=%f\n", m_externalVelocity.y());
-	// 	return;
-	// }
-
-	//btMax(m_stepHeight, m_externalVelocity.y() * dt)
-
-	// btScalar offset = m_stepHeight; //btMin(btMax(m_stepHeight, m_externalVelocity.y() * dt), m_gravity * dt);
-
-	// start.setOrigin(startVec);
-	// end.setOrigin(startVec - m_up * offset);
-
-	// start.setRotation(m_currentOrientation);
-	// end.setRotation(m_currentOrientation);
-
-	// btVector3 asd = m_externalVelocity * dt * 0.5;
-
-	// collisionWorld->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
-
-	// printf("m_closestHitFraction(%f)\n", callback.m_closestHitFraction);
-	// if(!callback.hasHit()){
-	// 	printf("HasNotHit(%f, %f, %f)\n", asd[0], asd[1], asd[2]);
-	// }
-
 	if (m_standingCollisionObject)
 	{
-		// if(callback.m_closestHitFraction > SIMD_EPSILON){
-		// 	return;
-		// }
 		btVector3 worldPos = m_standingPoint + m_externalVelocity * dt * 0.5;
 
 		btTransform transform = m_standingCollisionObject->getInterpolationWorldTransform();
@@ -1054,16 +1038,11 @@ void hbrKinematicCharacterController::inheritVelocity(btCollisionWorld *collisio
 
 		btVector3 newVelocity = angularVelocity.cross(localPosition) + linearVel;
 
-		// if(newVelocity.y() - m_externalVelocity.y() < -m_fallSpeed){
-		// 	return;
-		// }
-
-		// if(newVelocity.y() - m_externalVelocity.y() > m_gravity * dt) {
-		// 	newVelocity.setY(m_externalVelocity.y());
-		// }
-
-		if (newVelocity.y() - m_externalVelocity.y() > m_fallSpeed)
+		if (m_externalVelocity.y() - newVelocity.y() > m_fallSpeed)
 		{
+			// printf("FallSpeed = %f\n", m_fallSpeed);
+			// printf("LimitExternal = %f\n", m_externalVelocity.y());
+			// printf("VelIncreaseExternal = %f\n", m_externalVelocity.y() - newVelocity.y());
 			newVelocity.setY(m_externalVelocity.y());
 		}
 
@@ -1216,7 +1195,7 @@ void hbrKinematicCharacterController::setMaxJumpHeight(btScalar maxJumpHeight)
 
 bool hbrKinematicCharacterController::canJump() const
 {
-	return onGround();
+	return !m_wasJumping && m_wasOnGround && m_jumpOffset > m_timeSinceGrounded;
 }
 
 void hbrKinematicCharacterController::jump(const btVector3 &v)
@@ -1229,10 +1208,10 @@ void hbrKinematicCharacterController::jump(const btVector3 &v)
 
 	m_jumpPosition = m_ghostObject->getWorldTransform().getOrigin();
 
-	// if (m_localVelocity.y() < 0.0)
-	// {
-	// 	m_localVelocity.setY(0.0);
-	// }
+	if (m_localVelocity.y() < 0.0)
+	{
+		m_localVelocity.setY(0.0);
+	}
 
 	m_externalVelocity.setY(btMax(0.0f, m_externalVelocity.y()));
 

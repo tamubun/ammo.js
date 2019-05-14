@@ -43,6 +43,9 @@ protected:
 
 	const btCollisionObject *m_standingCollisionObject;
 	btVector3 m_standingPoint;
+	
+	btScalar m_jumpOffset;
+	btScalar m_timeSinceGrounded;
 
 	btScalar m_maxPenetrationDepth;
 	btScalar m_verticalVelocity;
