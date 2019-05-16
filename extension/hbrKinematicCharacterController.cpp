@@ -170,7 +170,7 @@ btVector3 hbrKinematicCharacterController::perpindicularComponent(const btVector
 hbrKinematicCharacterController::hbrKinematicCharacterController(btPairCachingGhostObject *ghostObject, btConvexShape *convexShape, btScalar stepHeight, const btVector3 &up)
 {
 	m_timeSinceGrounded = 0.0f;
-	m_jumpOffset = 0.1;
+	m_jumpOffset = 0.15;
 	m_standingCollisionObject = NULL;
 	m_standingPoint.setValue(0.0f, 1.0f, 0.0f);
 	m_ghostObject = ghostObject;
@@ -909,9 +909,12 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	if (m_wasOnGround)
 	{
+		//Dont apply friction along walk direction
 		btVector3 groundFriction = -m_friction * m_localVelocity;
-		groundFriction.setY(0.0);
+		groundFriction.setY(0.0f);
+		// btVector3 asd = m_walkDirection - m_localVelocity.normalized();
 		m_localVelocity += groundFriction;
+		// printf("friction(%f,%f,%f)\n", asd[0],asd[1],asd[2]);
 		// frictionMagnitude = groundFriction.length();
 		// printf("AddFriction=%f\n", groundFriction.length());
 	}

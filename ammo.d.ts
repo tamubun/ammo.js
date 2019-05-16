@@ -442,6 +442,7 @@ export class btPersistentManifold {
 export class btDispatcher {
 	getNumManifolds(): number;
 	getManifoldByIndexInternal(index: number): btPersistentManifold;
+	dispatchAllCollisionPairs(pairCache: btOverlappingPairCache, dispatchInfo: btDispatcherInfo, dispatcher: btDispatcher): void;
 }
 
 export class btCollisionDispatcher extends btDispatcher  {
@@ -849,6 +850,7 @@ export class hbrKinematicCharacterController extends btActionInterface  {
 	setUp(up: btVector3): void;
 	applyImpulse(v: btVector3): void;
 	setWalkDirection(walkDirection: btVector3): void;
+	reset(collisionWorld: btCollisionWorld): void;
 	warp(origin: btVector3): void;
 	preStep(collisionWorld: btCollisionWorld): void;
 	playerStep(collisionWorld: btCollisionWorld, dt: number): void;

@@ -458,6 +458,7 @@ interface btPersistentManifold {
 interface btDispatcher {
   long getNumManifolds();
   btPersistentManifold getManifoldByIndexInternal(long index);
+  void dispatchAllCollisionPairs(btOverlappingPairCache pairCache, [Ref, Const] btDispatcherInfo dispatchInfo, btDispatcher dispatcher);
 };
 
 interface btCollisionDispatcher: btDispatcher {
@@ -853,7 +854,7 @@ interface hbrKinematicCharacterController: btActionInterface {
   void setUp ([Const,Ref] btVector3 up);
   void applyImpulse([Const,Ref] btVector3 v);
   void setWalkDirection ([Const,Ref] btVector3 walkDirection);
-  //void reset ();
+  void reset (btCollisionWorld collisionWorld);
   void warp ([Const, Ref] btVector3 origin);
   void preStep (btCollisionWorld collisionWorld);
   void playerStep (btCollisionWorld collisionWorld, float dt);
