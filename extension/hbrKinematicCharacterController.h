@@ -212,6 +212,7 @@ public:
 	void setSpeedModifier(btScalar speed) { m_speedModifier = speed; };
 	void setFriction(btScalar friction) { m_friction = friction; };
 	void setDrag(btScalar friction) { m_drag = friction; };
+	void setJumpOffset(btScalar ms) { m_jumpOffset = ms; };
 
 	void applyExternalVelocity();
 
