@@ -818,11 +818,11 @@ void hbrKinematicCharacterController::applyExternalVelocity()
 
 	if (maxVelocity > 0.0)
 	{
-		btVector3 externalDir = m_externalVelocity;
-		externalDir.normalize();
+		// btVector3 externalDir = m_externalVelocity;
+		// externalDir.normalize();
 
-		btScalar projVel = m_localVelocity.dot(externalDir);
-		btScalar accelVel = btMax(maxVelocity - projVel, 0.0f);
+		// btScalar projVel = m_localVelocity.dot(externalDir);
+		// btScalar accelVel = btMax(maxVelocity - projVel, 0.0f);
 
 		// printf("ExternalVelocity(%f,%f,%f)\n", m_externalVelocity[0], m_externalVelocity[1], m_externalVelocity[2]);
 		// printf("ExternalVelocity2(%f,%f,%f)\n", externalDir[0] * accelVel, externalDir[1] * accelVel, externalDir[2] * accelVel);
@@ -907,7 +907,7 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	// btScalar friction = (m_wasOnGround ? m_friction : m_drag);
 	// btScalar frictionMagnitude = 0.0;
 
-	if (m_wasOnGround)
+	if (m_wasOnGround && !m_wasJumping)
 	{
 		//Dont apply friction along walk direction
 		btVector3 groundFriction = -m_friction * m_localVelocity;
