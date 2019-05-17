@@ -177,7 +177,7 @@ hbrKinematicCharacterController::hbrKinematicCharacterController(btPairCachingGh
 	m_up.setValue(0.0f, 0.0f, 1.0f);
 	m_jumpAxis.setValue(0.0f, 0.0f, 1.0f);
 	m_addedMargin = 0.02;
-	m_walkDirection.setValue(0.0, 0.0, 0.0);
+	m_walkDirection.setValue(0.0f, 0.0f, 0.0f);
 	m_AngVel.setValue(0.0, 0.0, 0.0);
 	m_velocity.setValue(0.0, 0.0, 0.0);
 	m_useGhostObjectSweepTest = true;
@@ -907,16 +907,28 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	// btScalar friction = (m_wasOnGround ? m_friction : m_drag);
 	// btScalar frictionMagnitude = 0.0;
 
-	if (m_wasOnGround && !m_wasJumping)
+	
+
+
+	if (m_wasOnGround && !m_wasJumping && m_localVelocity.length2() > 0.0)
 	{
+		btVector3 velDir = m_localVelocity.normalized();
+		velDir.setY(0.0);
+		btScalar velDot = velDir.dot(m_walkDirection);
+
+		//btVector3 groundFriction = -m_friction * m_localVelocity;
+
 		//Dont apply friction along walk direction
-		btVector3 groundFriction = -m_friction * m_localVelocity;
+		btVector3 groundFriction = m_localVelocity - m_localVelocity * btPow(btScalar(1.0) - m_friction, dt);
 		groundFriction.setY(0.0f);
-		// btVector3 asd = m_walkDirection - m_localVelocity.normalized();
-		m_localVelocity += groundFriction;
+		
+
+		m_localVelocity -= groundFriction;
+
 		// printf("friction(%f,%f,%f)\n", asd[0],asd[1],asd[2]);
 		// frictionMagnitude = groundFriction.length();
-		// printf("AddFriction=%f\n", groundFriction.length());
+		// printf("Dot=(%f)\n", velDot);
+		// printf("Dot=(%f)\n", dotasd);
 	}
 	else
 	{
