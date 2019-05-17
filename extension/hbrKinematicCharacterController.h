@@ -250,6 +250,8 @@ public:
 
 	bool onGround() const;
 	void setUpInterpolate(bool value);
+
+	inline btVector3 projectVectors(btVector3 &v1, btVector3 &v2)  const;
 };
 
 #endif // HBR_KINEMATIC_CHARACTER_CONTROLLER_H
