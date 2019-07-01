@@ -220,7 +220,9 @@ def build():
 
         wrapped = '''
   // This is ammo.js, a port of Bullet Physics to JavaScript. zlib licensed.
-  ''' + open(temp).read()
+  ''' + open(temp).read() + '''
+  export default Ammo;
+  '''
 
         open(temp, 'w').write(wrapped)
 
