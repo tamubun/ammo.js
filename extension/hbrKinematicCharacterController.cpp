@@ -1220,7 +1220,7 @@ void hbrKinematicCharacterController::setMaxJumpHeight(btScalar maxJumpHeight)
 
 bool hbrKinematicCharacterController::canJump() const
 {
-	return !m_wasJumping && m_wasOnGround && m_jumpOffset > m_timeSinceGrounded;
+	return !m_wasJumping && m_jumpOffset >= m_timeSinceGrounded;
 }
 
 void hbrKinematicCharacterController::jump(const btVector3 &v)
