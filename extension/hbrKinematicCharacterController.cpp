@@ -617,7 +617,7 @@ void hbrKinematicCharacterController::stepDown(btCollisionWorld *collisionWorld,
 		//set double test for 2x the step drop, to check for a large drop vs small drop
 		end_double.setOrigin(m_targetPosition - step_drop);
 
-		if (1== 0 && m_useGhostObjectSweepTest)
+		if (1 == 0 && m_useGhostObjectSweepTest)
 		{
 			m_ghostObject->convexSweepTest(m_convexShape, start, end, callback, collisionWorld->getDispatchInfo().m_allowedCcdPenetration);
 
@@ -885,6 +885,12 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 
 	m_onGround = false;
 
+	btScalar frictionMultiplier = 1.0;
+	if (m_standingCollisionObject)
+	{
+		frictionMultiplier = m_standingCollisionObject->getFriction();
+	}
+
 	inheritVelocity(collisionWorld, dt);
 
 	if (!m_wasOnGround && m_externalVelocity.length2() > 0.0)
@@ -911,27 +917,26 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 	btScalar accelerate = m_speedModifier * (m_wasOnGround ? m_walkAcceleration : m_airAcceleration);
 	btScalar maxVelocity = m_speedModifier * (m_wasOnGround ? m_walkMaxSpeed : m_airMaxSpeed);
 
-
 	if (m_wasOnGround && !m_wasJumping && m_localVelocity.length2() > SIMD_EPSILON)
 	{
 		// btVector3 velDir = m_localVelocity.normalized();
 		// velDir.setY(0.0);
 		// btScalar velDot = velDir.dot(m_walkDirection);
 
-		btVector3 groundFriction = -m_friction * m_localVelocity;
+		btVector3 groundFriction = -m_friction * m_localVelocity * frictionMultiplier;
 
 		//Dont apply friction along walk direction
 		// btVector3 groundFriction = m_localVelocity - m_localVelocity * btPow(btScalar(1.0) - m_friction, dt);
 		groundFriction.setY(0.0f);
 
 		btVector3 asd(0.0f, 0.0f, 0.0f);
-		if(speed <= maxVelocity && m_walkDirection.length2() > SIMD_EPSILON){
+		if (speed <= maxVelocity && m_walkDirection.length2() > SIMD_EPSILON)
+		{
 			asd = projectVectors(groundFriction, m_walkDirection);
 		}
 
 		m_localVelocity += groundFriction - asd;
 
-		
 		// printf("friction(%f,%f,%f)\n", asd[0],asd[1],asd[2]);
 		// frictionMagnitude = groundFriction.length();
 		// printf("Dot=(%f)\n", velDot);
@@ -942,8 +947,6 @@ void hbrKinematicCharacterController::playerStep(btCollisionWorld *collisionWorl
 		btVector3 dragFriction = -m_drag * m_localVelocity;
 		m_localVelocity += dragFriction;
 	}
-
-	
 
 	btScalar projVel = m_localVelocity.dot(m_walkDirection);
 	btScalar accelVel = accelerate * dt;
@@ -1360,9 +1363,8 @@ btQuaternion hbrKinematicCharacterController::getRotation(btVector3 &v0, btVecto
 	return shortestArcQuatNormalize2(v0, v1);
 }
 
-
 inline btVector3 hbrKinematicCharacterController::projectVectors(btVector3 &v1, btVector3 &v2) const
 {
 	float v2_ls = v2.length2();
-	return v2 * ( v2.dot(v1) / v2_ls );
+	return v2 * (v2.dot(v1) / v2_ls);
 }
