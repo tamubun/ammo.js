@@ -561,6 +561,7 @@ interface btTypedConstraint {
   void setBreakingImpulseThreshold([Const] float threshold);
   [Const] float getParam(long num, long axis);
   void setParam(long num, float value, long axis);
+  void setJointFeedback(btJointFeedback jointFeedback); // bun
 };
 
 enum btConstraintParams {
@@ -945,6 +946,15 @@ interface btGhostPairCallback: btOverlappingPairCallback {
   void btGhostPairCallback();
 };
 btGhostPairCallback implements btOverlappingPairCallback;
+
+// bun
+interface btJointFeedback {
+  void btJointFeedback();
+  [Value] attribute btVector3 m_appliedForceBodyA;
+  [Value] attribute btVector3 m_appliedTorqueBodyA;
+  [Value] attribute btVector3 m_appliedForceBodyB;
+  [Value] attribute btVector3 m_appliedTorqueBodyB;
+};
 
 // soft bodies
 

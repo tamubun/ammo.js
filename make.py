@@ -154,7 +154,7 @@ def build():
         assert(os.path.exists('glue.bc'))
 
         # Configure with CMake on Windows, and with configure on Unix.
-        cmake_build = emscripten.WINDOWS
+        cmake_build = True
 
         if cmake_build:
             if not os.path.exists('CMakeCache.txt'):
