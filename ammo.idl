@@ -591,8 +591,27 @@ interface btGeneric6DofConstraint: btTypedConstraint {
   void setAngularLowerLimit([Const, Ref] btVector3 angularLower);
   void setAngularUpperLimit([Const, Ref] btVector3 angularUpper);
   [Const, Ref] btTransform getFrameOffsetA();
+  btRotationalLimitMotor getRotationalLimitMotor(long index); // bun
+  btTranslationalLimitMotor getTranslationalLimitMotor (); // bun
 };
 btGeneric6DofConstraint implements btTypedConstraint;
+
+// bun
+interface btRotationalLimitMotor
+{
+  attribute float m_targetVelocity;
+  attribute float m_maxMotorForce;
+  attribute float m_maxLimitForce;
+  attribute boolean m_enableMotor;
+};
+
+// bun
+interface btTranslationalLimitMotor
+{
+  [Value] attribute btVector3 m_targetVelocity;
+  [Value] attribute btVector3 m_maxMotorForce;
+  attribute boolean[] m_enableMotor;
+};
 
 interface btGeneric6DofSpringConstraint: btGeneric6DofConstraint {
   void btGeneric6DofSpringConstraint([Ref] btRigidBody rbA, [Ref] btRigidBody rbB, [Ref] btTransform frameInA, [Ref] btTransform frameInB, boolean useLinearFrameReferenceFrameA);
