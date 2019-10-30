@@ -593,6 +593,8 @@ interface btGeneric6DofConstraint: btTypedConstraint {
   [Const, Ref] btTransform getFrameOffsetA();
   btRotationalLimitMotor getRotationalLimitMotor(long index); // bun
   btTranslationalLimitMotor getTranslationalLimitMotor (); // bun
+  float getAngle(long axis_index); // bun
+  float getRelativePivotPosition(long axis_index); // bun
 };
 btGeneric6DofConstraint implements btTypedConstraint;
 
