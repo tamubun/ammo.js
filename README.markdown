@@ -1,6 +1,18 @@
 ammo.js
 =======
+# tamubun comment
 
+emsdk should be installed fastcomp (not upstream). So under emsdk dir,
+
+    `./emsdk install latest-fastcomp`
+
+    `./emsdk activate latest-fastcomp`
+
+    `source ./emsdk_env.sh`
+
+If emsdk was installed upstream, stage 4 linking will fail:
+
+  `llvm-link: Not enough positional command line arguments specified!`
 
 # Demos
 
